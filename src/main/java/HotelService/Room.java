@@ -7,11 +7,11 @@ import java.util.Date;
 
 public class Room {
     //Attribute
-    private String id;
-    private int numberOfBeds;
-    private BedTypes bedType;
-    private int numberOfBaths;
-    private RoomTypes roomType;
+    private final String id;
+    private final int numberOfBeds;
+    private final BedTypes bedType;
+    private final int numberOfBaths;
+    private final RoomTypes roomType;
     private ArrayList<BlockedTimeZone> reservationList;
 
     public Room(String pId, int pNumberOfBeds, BedTypes pBedType, int pNumberOfBaths, RoomTypes pRoomType) {

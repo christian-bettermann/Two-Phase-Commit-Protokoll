@@ -7,10 +7,10 @@ import java.util.Date;
 
 public class Car {
     //Attribute
-    private String manufacturer;
-    private String model;
-    private int horsePower;
-    private CarTypes type;
+    private final String manufacturer;
+    private final String model;
+    private final int horsePower;
+    private final CarTypes type;
     private ArrayList<BlockedTimeZone> reservationList;
 
     public Car(String pManufacturer, String pModel, int pHP, CarTypes pType) {
