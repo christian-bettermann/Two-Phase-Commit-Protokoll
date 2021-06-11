@@ -3,111 +3,107 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.concurrent.TimeUnit;
+import java.net.SocketTimeoutException;
+
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 public class Server {
-	
+	protected static final Logger logger = LogManager.getRootLogger();
 	private static DatagramSocket socket;
-    private static boolean running;
-    private byte[] buffer = new byte[256];
-    
-    private static InetAddress carBrokerAddress;
-    private static InetAddress hotelBrokerAddress;
 	
-    private static DatagramSocket carBrokerSocket;
-    private static DatagramSocket hotelBrokerSocket;
+    private InetAddress carBrokerAddress;
+    private InetAddress hotelBrokerAddress;
+	    
+    int serverPort, carBrokerPort, hotelBrokerPort;
     
-    static int carBrokerPort;
-    static int hotelBrokerServer;
+    boolean carBrokerOnline, hotelBrokerOnline;
     
-    static boolean carBrokerOnline, hotelBrokerOnline;
-    
-	public Server (int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerServer) {
+	public Server (int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
+		logger.info("Creating Server...");
+		this.serverPort = serverPort;
 		this.carBrokerAddress = carBrokerAddress;
 		this.hotelBrokerAddress = hotelBrokerAddress;
+		this.carBrokerPort = carBrokerPort;
+		this.hotelBrokerPort = hotelBrokerPort;
 		carBrokerOnline = false;
+		hotelBrokerOnline = false;
+	}
+	
 
+	public void start() {
+		logger.info("Starting Server!");
 		try {
 			socket = new DatagramSocket(serverPort);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 		
-	}
-	
-	public static void main(String[] args) {
-		//Sending initial Messages to Broker
-
+		//Sending initial Messages to Brokers
 		//initial CarBroker message
 		do {
 			checkCarBrokerAvailability();
-			if(!carBrokerOnline) {
-				try {
-					TimeUnit.SECONDS.sleep(5);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
 		} while (!carBrokerOnline);
+		System.out.println("CarBroker available");
 		
 		//initial HotelBroker message
 		do {
 			checkHotelBrokerAvailability();
-			if(!hotelBrokerOnline) {
-				try {
-					TimeUnit.SECONDS.sleep(5);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
 		} while (!hotelBrokerOnline);
+		System.out.println("HotelBroker available");
 		
 		//Brokers are initialy available
-	
-		
-		
 		
 		
 	}
 	
-	public static void checkCarBrokerAvailability() {
+	public void checkCarBrokerAvailability() {
 		try {
 			byte[] buf;
 			String msg = "0 InitialMessageRequest";
 			
-		    carBrokerSocket = new DatagramSocket();
+			socket.setSoTimeout(2500);
 		    buf = msg.getBytes();
 		    DatagramPacket packet = new DatagramPacket(buf, buf.length, carBrokerAddress, carBrokerPort);
-		    carBrokerSocket.send(packet);
+		    logger.info(buf+", "+buf.length+", "+carBrokerAddress+", "+carBrokerPort);
+		    socket.send(packet);
 		    //wait for answer
 		    packet = new DatagramPacket(buf, buf.length);
-		    carBrokerSocket.receive(packet);
+		    socket.receive(packet);
 		    String response = new String(packet.getData(), 0, packet.getLength());
-		    if(response.equals("0 InitialMessageResponse")) {
+		    if(response.equals("0 InitialMessageResponseCarBroker")) {
 		    	carBrokerOnline = true;
 		    }
-	    } catch (IOException e) {
+	    } catch (SocketTimeoutException e) {
+            //Timeout
+            System.out.println("CarBroker Timeout!");
+            carBrokerOnline = false;
+        } catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
 	
-	public static void checkHotelBrokerAvailability() {
+	public void checkHotelBrokerAvailability() {
 		try {
 			byte[] buf;
 			String msg = "0 InitialMessageRequest";
 			
-		    hotelBrokerSocket = new DatagramSocket();
+			socket.setSoTimeout(2500);
 		    buf = msg.getBytes();
-		    DatagramPacket packet = new DatagramPacket(buf, buf.length, carBrokerAddress, carBrokerPort);
-		    hotelBrokerSocket.send(packet);
+		    DatagramPacket packet = new DatagramPacket(buf, buf.length, hotelBrokerAddress, hotelBrokerPort);
+		    socket.send(packet);
 		    //wait for answer
 		    packet = new DatagramPacket(buf, buf.length);
-		    hotelBrokerSocket.receive(packet);
+		    socket.receive(packet);
 		    String response = new String(packet.getData(), 0, packet.getLength());
-		    if(response.equals("0 InitialMessageResponse")) {
+		    if(response.equals("0 InitialMessageResponseHotelBroker")) {
 		    	hotelBrokerOnline = true;
 		    }
-	    } catch (IOException e) {
+	    } catch (SocketTimeoutException e) {
+            //Timeout
+            System.out.println("HotelBroker Timeout!");
+            hotelBrokerOnline = false;
+        } catch (IOException e) {
 			e.printStackTrace();
 		}
 	}
