@@ -1,0 +1,44 @@
+{
+	"rooms" : [
+		{
+			"Id": "1",
+			"Beds": "2",
+			"BedType": "Single",
+			"Bath": "1",
+			"Type": "Standard",
+			"Reservations": []
+		},
+		{
+			"Id": "2",
+			"Beds": "1",
+			"BedType": "Double",
+			"Bath": "1",
+			"Type": "Standard",
+			"Reservations": []
+		},
+		{
+			"Id": "3",
+			"Beds": "1",
+			"BedType": "Double",
+			"Bath": "1",
+			"Type": "Standard",
+			"Reservations": []
+		},
+		{
+			"Id": "4",
+			"Beds": "2",
+			"BedType": "Double",
+			"Bath": "2",
+			"Type": "Penthouse",
+			"Reservations": []
+		},
+		{
+			"Id": "5",
+			"Beds": "2",
+			"BedType": "Single",
+			"Bath": "1",
+			"Type": "Standard",
+			"Reservations": []
+		}
+	]
+}
