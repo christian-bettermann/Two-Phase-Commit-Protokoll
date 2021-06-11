@@ -4,35 +4,35 @@
 			"Manufacturer": "Audi",
 			"Model": "A6",
 			"HorsePower": "250",
-			"Type": "Kombi",
+			"Type": "STATION_WAGON",
 			"Reservations": []
 		},
 		{
 			"Manufacturer": "Mercedes",
 			"Model": "E 300",
 			"HorsePower": "320",
-			"Type": "Limousine",
+			"Type": "SEDAN",
 			"Reservations": []
 		},
 		{
 			"Manufacturer": "BMW",
 			"Model": "4er",
 			"HorsePower": "230",
-			"Type": "Coupe",
+			"Type": "COUPE",
 			"Reservations": []
 		},
 		{
 			"Manufacturer": "Opel",
 			"Model": "Insignia",
 			"HorsePower": "180",
-			"Type": "Limousine",
+			"Type": "SEDAN",
 			"Reservations": []
 		},
 		{
 			"Manufacturer": "Volkswagen",
 			"Model": "Arteon",
 			"HorsePower": "280",
-			"Type": "Coupe",
+			"Type": "COUPE",
 			"Reservations": []
 		}
 	]
