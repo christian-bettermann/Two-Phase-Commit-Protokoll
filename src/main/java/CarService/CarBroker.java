@@ -5,19 +5,24 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.util.ArrayList;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class CarBroker {
+
+	//Attribute
 	private static final Logger logger = LogManager.getRootLogger();
 	private static DatagramSocket socket;
     private boolean online;
-    private byte[] buffer = new byte[256];
+    private byte[] buffer = new byte[1024];
     private int carBrokerPort;
+    private CarPool pool;
     
     public CarBroker(int carBrokerPort) {
     	logger.info("Creating CarBroker...");
+		this.pool = new CarPool("Sixt");
     	this.carBrokerPort = carBrokerPort;
     }
     

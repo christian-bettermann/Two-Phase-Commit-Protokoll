@@ -12,7 +12,7 @@ import HotelService.HotelBroker;
 public class Start {
 	static InetAddress carBrokerAddress;
 	static InetAddress hotelBrokerAddress;
-	protected static final Logger logger = LogManager.getRootLogger();
+	private static final Logger logger = LogManager.getRootLogger();
 	
 	public static void main(String[] args) {
 		//init logger

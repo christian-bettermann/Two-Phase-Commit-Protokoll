@@ -11,15 +11,19 @@ import org.apache.logging.log4j.Logger;
 
 
 public class HotelBroker {
-	protected static final Logger logger = LogManager.getRootLogger();
+
+	//Attribute
+	private static final Logger logger = LogManager.getRootLogger();
     private static DatagramSocket socket;
     private boolean online;
-    private byte[] buffer = new byte[256];
+    private byte[] buffer = new byte[1024];
+    private Hotel hotel;
     
     int hotelBrokerPort;
     
     public HotelBroker(int hotelBrokerPort) {
     	logger.info("Creating HotelBroker...");
+    	this.hotel = new Hotel("Hotel Meier");
     	this.hotelBrokerPort = hotelBrokerPort;
     }
     
