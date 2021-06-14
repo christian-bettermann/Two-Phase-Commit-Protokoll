@@ -24,19 +24,18 @@ public class Room {
     }
 
     public boolean checkAndBookIfFree(Date startTime, Date EndTime) {
-        boolean free = checkRoomIsFreeInTimeZone(startTime, EndTime);
+        boolean free = checkRoomIsFreeInTimeZone(startTime);
         if(free) {
             bookRoom(startTime, EndTime);
         }
         return free;
     }
 
-    private boolean checkRoomIsFreeInTimeZone(Date startTime, Date EndTime) {
-        boolean free = false;
+    private boolean checkRoomIsFreeInTimeZone(Date startTime) {
+        boolean free;
         int actuallyReservationAmount = this.reservationList.size();
         int ctr = 0;
         if(actuallyReservationAmount >= 1) {
-            free = true;
             for(int i = 0; i < actuallyReservationAmount; i++) {
                 if(reservationList.get(i).getEndTime().before(startTime)) {
                     ctr++;
@@ -44,6 +43,8 @@ public class Room {
             }
             if(ctr == actuallyReservationAmount) {
                 free = true;
+            } else {
+                free = false;
             }
         } else {
             free = true;

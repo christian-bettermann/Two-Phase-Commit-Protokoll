@@ -22,15 +22,31 @@ public class Car {
     }
 
     public boolean checkAndBookIfFree(Date startTime, Date EndTime) {
-        boolean free = checkCarIsFreeInTimeZone(startTime, EndTime);
+        boolean free = checkCarIsFreeInTimeZone(startTime);
         if(free) {
             bookCar(startTime, EndTime);
         }
         return free;
     }
 
-    private boolean checkCarIsFreeInTimeZone(Date startTime, Date EndTime) {
-        boolean free = false;
+    private boolean checkCarIsFreeInTimeZone(Date startTime) {
+        boolean free;
+        int actuallyReservationAmount = this.reservationList.size();
+        int ctr = 0;
+        if(actuallyReservationAmount >= 1) {
+            for(int i = 0; i < actuallyReservationAmount; i++) {
+                if(reservationList.get(i).getEndTime().before(startTime)) {
+                    ctr++;
+                }
+            }
+            if(ctr == actuallyReservationAmount) {
+                free = true;
+            } else {
+                free = false;
+            }
+        } else {
+            free = true;
+        }
         return free;
     }
 
