@@ -33,6 +33,21 @@ public class Room {
 
     private boolean checkRoomIsFreeInTimeZone(Date startTime, Date EndTime) {
         boolean free = false;
+        int actuallyReservationAmount = this.reservationList.size();
+        int ctr = 0;
+        if(actuallyReservationAmount >= 1) {
+            free = true;
+            for(int i = 0; i < actuallyReservationAmount; i++) {
+                if(reservationList.get(i).getEndTime().before(startTime)) {
+                    ctr++;
+                }
+            }
+            if(ctr == actuallyReservationAmount) {
+                free = true;
+            }
+        } else {
+            free = true;
+        }
         return free;
     }
 
