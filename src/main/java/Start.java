@@ -31,18 +31,19 @@ public class Start {
 		int hotelBrokerPort = 30902;
 		
 		//Start Brokers
-		logger.info("Creating Brokers");
 		CarBroker carBroker = new CarBroker(carBrokerPort);
 		HotelBroker hotelBroker = new HotelBroker(hotelBrokerPort);
-		logger.info("Creating Servers");
-		Server server1 = new Server(firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
-		Server server2 = new Server(secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		
-		server1.start();
-		server2.start();
-		carBroker.start();
-		hotelBroker.start();
+		Thread serverOneThread = new Thread(serverOne);
+		Thread serverTwoThread = new Thread(serverTwo);
+		Thread carBrokerThread = new Thread(carBroker);
+		Thread hotelBrokerThread = new Thread(hotelBroker);
 		
-		logger.info("Started Everything!");
+		serverOneThread.start();
+		serverTwoThread.start();
+		carBrokerThread.start();
+		hotelBrokerThread.start();
 	}
 }

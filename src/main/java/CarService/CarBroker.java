@@ -10,7 +10,7 @@ import java.util.ArrayList;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class CarBroker {
+public class CarBroker implements Runnable {
 
 	//Attribute
 	private static final Logger logger = LogManager.getRootLogger();
@@ -21,12 +21,12 @@ public class CarBroker {
     private CarPool pool;
     
     public CarBroker(int carBrokerPort) {
-    	logger.info("Creating CarBroker...");
+    	logger.trace("Creating CarBroker...");
 		this.pool = new CarPool("Sixt");
     	this.carBrokerPort = carBrokerPort;
     }
     
-    public void start() {
+    public void run() {
     	logger.info("Starting CarBroker...");
     	try {
 			socket = new DatagramSocket(carBrokerPort);
@@ -43,8 +43,10 @@ public class CarBroker {
 	            int port = dp.getPort();
 	            String received = new String(dp.getData(), 0, dp.getLength());
 				String response = this.analyzeAnGetResponse(received);
+				logger.trace("CarBroker received: "+ received);
 				buffer = response.getBytes();
 				dp = new DatagramPacket(buffer, buffer.length, address, port);
+				logger.trace("CarBroker sent: "+ new String(dp.getData(), 0, dp.getLength()));
 	            socket.send(dp);
         	} catch (IOException e) {
 				e.printStackTrace();

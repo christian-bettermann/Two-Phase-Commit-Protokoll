@@ -4,13 +4,16 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
+import java.util.concurrent.TimeUnit;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-public class Server {
+public class Server implements Runnable {
 	protected static final Logger logger = LogManager.getRootLogger();
 	private static DatagramSocket socket;
+	private byte[] buffer = new byte[1024];
+	private String serverName;
 	
     private InetAddress carBrokerAddress;
     private InetAddress hotelBrokerAddress;
@@ -19,8 +22,9 @@ public class Server {
     
     boolean carBrokerOnline, hotelBrokerOnline;
     
-	public Server (int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
-		logger.info("Creating Server...");
+	public Server (String serverName, int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
+		logger.trace("Creating Server <" + serverName + ">...");
+		this.serverName = serverName;
 		this.serverPort = serverPort;
 		this.carBrokerAddress = carBrokerAddress;
 		this.hotelBrokerAddress = hotelBrokerAddress;
@@ -31,8 +35,8 @@ public class Server {
 	}
 	
 
-	public void start() {
-		logger.info("Starting Server!");
+	public void run() {
+		logger.info("Starting Server <" + serverName + ">...");
 		try {
 			socket = new DatagramSocket(serverPort);
 		} catch (SocketException e) {
@@ -43,14 +47,26 @@ public class Server {
 		//initial CarBroker message
 		do {
 			checkCarBrokerAvailability();
+			if(!carBrokerOnline) {
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 		} while (!carBrokerOnline);
-		System.out.println("CarBroker available");
 		
 		//initial HotelBroker message
 		do {
 			checkHotelBrokerAvailability();
+			if(!hotelBrokerOnline) {
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
+			}
 		} while (!hotelBrokerOnline);
-		System.out.println("HotelBroker available");
 		
 		//Brokers are initialy available
 		
@@ -59,24 +75,23 @@ public class Server {
 	
 	public void checkCarBrokerAvailability() {
 		try {
-			byte[] buf;
 			String msg = "0 InitialMessageRequest";
-			
 			socket.setSoTimeout(2500);
-		    buf = msg.getBytes();
-		    DatagramPacket packet = new DatagramPacket(buf, buf.length, carBrokerAddress, carBrokerPort);
-		    logger.info(buf+", "+buf.length+", "+carBrokerAddress+", "+carBrokerPort);
+
+		    DatagramPacket packet = new DatagramPacket(msg.getBytes(), msg.getBytes().length, carBrokerAddress, carBrokerPort);
 		    socket.send(packet);
 		    //wait for answer
-		    packet = new DatagramPacket(buf, buf.length);
+		    packet = new DatagramPacket(buffer, buffer.length);
 		    socket.receive(packet);
-		    String response = new String(packet.getData(), 0, packet.getLength());
-		    if(response.equals("0 InitialMessageResponseCarBroker")) {
+		    String received = new String(packet.getData(), 0, packet.getLength());
+		    logger.trace("Server received: "+ received);
+		    if(received.equals("0 InitialMessageResponseCarBroker")) {
 		    	carBrokerOnline = true;
+		    	logger.info("CarBroker is available for <" + serverName +">");
 		    }
 	    } catch (SocketTimeoutException e) {
             //Timeout
-            System.out.println("CarBroker Timeout!");
+	    	logger.error("CarBroker is not available for <" + serverName +">!");
             carBrokerOnline = false;
         } catch (IOException e) {
 			e.printStackTrace();
@@ -85,23 +100,23 @@ public class Server {
 	
 	public void checkHotelBrokerAvailability() {
 		try {
-			byte[] buf;
 			String msg = "0 InitialMessageRequest";
-			
 			socket.setSoTimeout(2500);
-		    buf = msg.getBytes();
-		    DatagramPacket packet = new DatagramPacket(buf, buf.length, hotelBrokerAddress, hotelBrokerPort);
+			
+		    DatagramPacket packet = new DatagramPacket(msg.getBytes(), msg.getBytes().length, hotelBrokerAddress, hotelBrokerPort);
 		    socket.send(packet);
 		    //wait for answer
-		    packet = new DatagramPacket(buf, buf.length);
+		    packet = new DatagramPacket(buffer, buffer.length);
 		    socket.receive(packet);
-		    String response = new String(packet.getData(), 0, packet.getLength());
-		    if(response.equals("0 InitialMessageResponseHotelBroker")) {
+		    String received = new String(packet.getData(), 0, packet.getLength());
+		    logger.trace("Server received: "+ received);
+		    if(received.equals("0 InitialMessageResponseHotelBroker")) {
 		    	hotelBrokerOnline = true;
+		    	logger.info("HotelBroker is available for <" + serverName +">");
 		    }
 	    } catch (SocketTimeoutException e) {
             //Timeout
-            System.out.println("HotelBroker Timeout!");
+	    	logger.error("HotelBroker is not available for <" + serverName +">!");
             hotelBrokerOnline = false;
         } catch (IOException e) {
 			e.printStackTrace();

@@ -10,7 +10,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 
-public class HotelBroker {
+public class HotelBroker implements Runnable {
 
 	//Attribute
 	private static final Logger logger = LogManager.getRootLogger();
@@ -22,12 +22,12 @@ public class HotelBroker {
     int hotelBrokerPort;
     
     public HotelBroker(int hotelBrokerPort) {
-    	logger.info("Creating HotelBroker...");
+    	logger.trace("Creating HotelBroker...");
     	this.hotel = new Hotel("Hotel Meier");
     	this.hotelBrokerPort = hotelBrokerPort;
     }
     
-    public void start() {
+    public void run() {
     	logger.info("Starting HotelBroker...");
     	try {
 			socket = new DatagramSocket(hotelBrokerPort);
@@ -41,13 +41,14 @@ public class HotelBroker {
         	try {
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
-            
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
 	            String received = new String(dp.getData(), 0, dp.getLength());
 				String response = this.analyzeAnGetResponse(received);
+				logger.trace("HotelBroker received: "+ received);
 				buffer = response.getBytes();
 				dp = new DatagramPacket(buffer, buffer.length, address, port);
+				logger.trace("HotelBroker sent: "+ new String(dp.getData(), 0, dp.getLength()));
 	            socket.send(dp);
         	} catch (IOException e) {
 				e.printStackTrace();
