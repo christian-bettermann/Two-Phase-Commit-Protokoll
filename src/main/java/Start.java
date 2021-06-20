@@ -31,8 +31,8 @@ public class Start {
 		int hotelBrokerPort = 30902;
 		
 		//Start Brokers
-		CarBroker carBroker = new CarBroker(carBrokerPort);
-		HotelBroker hotelBroker = new HotelBroker(hotelBrokerPort);
+		CarBroker carBroker = new CarBroker("Sixt", carBrokerPort);
+		HotelBroker hotelBroker = new HotelBroker("Hotel Meier", hotelBrokerPort);
 		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		

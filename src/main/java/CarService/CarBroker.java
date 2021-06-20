@@ -5,8 +5,9 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.util.ArrayList;
+import java.net.UnknownHostException;
 
+import Message.Message;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -19,15 +20,17 @@ public class CarBroker implements Runnable {
     private byte[] buffer = new byte[1024];
     private int carBrokerPort;
     private CarPool pool;
+    private String brokerName;
     
-    public CarBroker(int carBrokerPort) {
+    public CarBroker(String brokerName, int carBrokerPort) {
     	logger.trace("Creating CarBroker...");
-		this.pool = new CarPool("Sixt");
+    	this.brokerName = brokerName;
+		this.pool = new CarPool(brokerName);
     	this.carBrokerPort = carBrokerPort;
     }
     
     public void run() {
-    	logger.info("Starting CarBroker...");
+    	logger.info("Starting CarBroker on port <" + carBrokerPort + "> ...");
     	try {
 			socket = new DatagramSocket(carBrokerPort);
 		} catch (SocketException e) {
@@ -37,17 +40,20 @@ public class CarBroker implements Runnable {
         
         while (online) {
         	try {
+        		buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            String received = new String(dp.getData(), 0, dp.getLength());
-				String response = this.analyzeAnGetResponse(received);
-				logger.trace("CarBroker received: "+ received);
-				buffer = response.getBytes();
-				dp = new DatagramPacket(buffer, buffer.length, address, port);
-				logger.trace("CarBroker sent: "+ new String(dp.getData(), 0, dp.getLength()));
-	            socket.send(dp);
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
+	            logger.info("CarBroker received: <"+ received.toString() +">");
+				Message response = this.analyzeAndGetResponse(received);
+				if(response != null) {
+					buffer = response.toString().getBytes();
+					dp = new DatagramPacket(buffer, buffer.length, address, port);
+					logger.trace("CarBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+		            socket.send(dp);
+				}
         	} catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -61,65 +67,38 @@ public class CarBroker implements Runnable {
 	 * @return    It returns the requested answer for the request
 	 *
 	 */
-	private String analyzeAnGetResponse(String msg) {
-		String response = "";
-		int id = extractMessageType(msg);
-		String contentOfMessage = extractMessageContent(msg);
-		switch(id) {
-			case 0:
-				if(contentOfMessage.equals("InitialMessageRequest")) {
-					response = "0" + " " +  "InitialMessageResponseCarBroker";
-				}
-				break;
-			case 1:
-				break;
-			case 2:
-				break;
-			case 3:
-				break;
-			case 4:
-				break;
-			case 5:
-				break;
-			default:
-				response = "-1" + " " + "ERROR ID_FormatException";
-				break;
-		}
-    	return response;
-	}
-
-	/**
-	 * A method to extract the MessageId from an incoming network package
-	 * @param msg Message to extract the id from
-	 * @return    Normally it returns the id from 0 to 5
-	 *            In case of bad format it return -1
-	 */
-	private int extractMessageType(String msg) {
-    	int typeId;
-    	String[] saveArray = msg.split(" ");
-
-    	try {
-			typeId = Integer.parseInt(saveArray[0].trim());
-		} catch(Exception e) {
-    		typeId = -1;
-		}
-    	return typeId;
-	}
-
-	/**
-	 * A method to extract the content from an incoming network package
-	 * @param msg Message to extract the content from
-	 * @return    It returns the content from the message
-	 *
-	 */
-	private String extractMessageContent(String msg) {
-		String typeContent;
+	private Message analyzeAndGetResponse(Message msg) {
+		String statusMessage = msg.getStatusMessage();
+		Message response = new Message();
 		try {
-			String[] saveArray = msg.split(" ");
-			typeContent = saveArray[1].trim();
-		} catch (Exception e) {
-			typeContent = " ";
+			switch(msg.getStatus()) {
+				case 0:
+					if(statusMessage.equals("InitialMessageRequest")) {
+						response = new Message(0, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "InitialMessageResponseCarBroker");
+					}
+					break;
+				case 1:
+					break;
+				case 2:
+					break;
+				case 3:
+					break;
+				case 4:
+					break;
+				case 5:
+					break;
+				case 8:
+					if(statusMessage.equals("HiFromServerMessageHandler")) {
+						response = new Message(8, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "OK");
+					}
+					break;
+				default:
+					response = new Message(-1, InetAddress.getLocalHost(), socket.getLocalPort(), 9, "ERROR ID_FormatException");
+					break;
+			} 
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
 		}
-		return typeContent;
+		return response;
 	}
 }
