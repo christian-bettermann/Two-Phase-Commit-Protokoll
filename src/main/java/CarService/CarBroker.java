@@ -26,7 +26,6 @@ public class CarBroker implements Runnable {
     public CarBroker(String brokerName, int carBrokerPort) {
     	try {
 			localAddress = InetAddress.getLocalHost();
-			logger.error(localAddress);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -52,9 +51,7 @@ public class CarBroker implements Runnable {
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            logger.error(new String(dp.getData(), 0, dp.getLength()));
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
-	            logger.error(received.getStatus().toString());
 	            logger.info("CarBroker received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {

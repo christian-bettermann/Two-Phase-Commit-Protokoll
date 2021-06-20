@@ -31,7 +31,6 @@ public class Server implements Runnable {
 	public Server (String serverName, int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
 		try {
 			localAddress = InetAddress.getLocalHost();
-			logger.error(localAddress);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -88,11 +87,8 @@ public class Server implements Runnable {
 	
 	public void checkCarBrokerAvailability() {
 		try {
-			logger.warn("!!!"+ localAddress);
 			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageRequest");
-			logger.warn("!!!"+ msg.getSenderAddress());
 			socket.setSoTimeout(2500);
-			
 		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, carBrokerAddress, carBrokerPort);
 		    socket.send(packet);
 		    //wait for answer
@@ -117,9 +113,7 @@ public class Server implements Runnable {
 	public void checkHotelBrokerAvailability() {
 		try {
 			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageRequest");
-			
 			socket.setSoTimeout(2500);
-			
 		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, hotelBrokerAddress, hotelBrokerPort);
 		    socket.send(packet);
 		    //wait for answer
@@ -146,14 +140,14 @@ public class Server implements Runnable {
 		incomingMessagesListHandler.start();
 		
 		//Add hotelBroker test message to Queue
-		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, hotelBrokerAddress.toString(), hotelBrokerPort, 0, "HiFromHotel");
-		incomingMessages.add(hotelBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
+//		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, hotelBrokerAddress.toString(), hotelBrokerPort, 0, "HiFromHotel");
+//		incomingMessages.add(hotelBrokerTestMsg);
+//		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
 		
 		//Add hotelBroker test message to Queue
-		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, carBrokerAddress.toString(), carBrokerPort, 0, "HiFromCarBroker");
-		incomingMessages.add(carBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
+//		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, carBrokerAddress.toString(), carBrokerPort, 0, "HiFromCarBroker");
+//		incomingMessages.add(carBrokerTestMsg);
+//		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
 		
 		while(online) {
 			try {

@@ -28,7 +28,6 @@ public class HotelBroker implements Runnable {
     public HotelBroker(String brokerName, int hotelBrokerPort) {
     	try {
 			localAddress = InetAddress.getLocalHost();
-			logger.error(localAddress);
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
