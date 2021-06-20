@@ -2,7 +2,7 @@
 Message-Format:
 * public Message(StatusTypes statusCode, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage)
 
-Implemented StatusTYpes:
+Implemented StatusTypes:
 * BOOKING
 * PREPARE
 * READY
