@@ -1,18 +1,32 @@
 package Message;
+import java.net.Inet4Address;
 import java.net.InetAddress;
+import java.net.UnknownHostException;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 public class Message {
 	private static final Logger logger = LogManager.getRootLogger();
-	private int status;
+	private StatusTypes status;
 	private InetAddress senderAddress;
 	private int senderPort; 
 	private int bookingID; 
 	private String statusMessage;
 
-	public Message(int status, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage) {
+	public Message(StatusTypes status, String senderAddress, int senderPort, int bookingID, String statusMessage) {
+		this.status = status;
+		try {
+			this.senderAddress = InetAddress.getByName(senderAddress.toString().split("/")[1]);	//
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
+		this.senderPort = senderPort; 
+		this.bookingID = bookingID; 
+		this.statusMessage = statusMessage;
+	}
+	
+	public Message(StatusTypes status, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage) {
 		this.status = status;
 		this.senderAddress = senderAddress;
 		this.senderPort = senderPort; 
@@ -28,13 +42,16 @@ public class Message {
 		String[] msgArray = msg.split(" ");
 		if(msgArray.length == 5) {
 			try {
-				status = Integer.parseInt(msgArray[0].trim());
-				senderAddress = InetAddress.getByName(msgArray[0].trim());
+				status = StatusTypes.valueOf(msgArray[0].trim());
+				
+				senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);
+				logger.warn(senderAddress);
 				senderPort = Integer.parseInt(msgArray[2].trim());
 				bookingID = Integer.parseInt(msgArray[3].trim());
 				statusMessage = msgArray[4].trim();
 			} catch(Exception e) {
-				status = -1;
+				e.printStackTrace();
+				status = StatusTypes.ERROR;
 				senderAddress = null;
 				senderPort = -1; 
 				bookingID = -1; 
@@ -51,18 +68,18 @@ public class Message {
 	}
 	
 	public boolean validate() {
-		if(status != 1) {
+		if(status != StatusTypes.ERROR) {
 			return true;
 		}
 		return false;
 	}
 	
 	
-	public int getStatus() {
+	public StatusTypes getStatus() {
 		return status;
 	}
 
-	public void setStatus(int status) {
+	public void setStatus(StatusTypes status) {
 		this.status = status;
 	}
 

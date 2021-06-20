@@ -16,7 +16,7 @@ public class Start {
 	
 	public static void main(String[] args) {
 		//init logger
-		Configurator.setRootLevel(Level.INFO);
+		Configurator.setRootLevel(Level.TRACE);
 
 		logger.info("Starting System...");
 		int firstServerPort = 30800;

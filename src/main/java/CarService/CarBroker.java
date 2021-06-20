@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import Message.Message;
+import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,8 +21,15 @@ public class CarBroker implements Runnable {
     private int carBrokerPort;
     private CarPool pool;
     private String brokerName;
+    private InetAddress localAddress;
     
     public CarBroker(String brokerName, int carBrokerPort) {
+    	try {
+			localAddress = InetAddress.getLocalHost();
+			logger.error(localAddress);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
     	logger.trace("Creating CarBroker...");
     	this.brokerName = brokerName;
 		this.pool = new CarPool(brokerName);
@@ -45,7 +52,9 @@ public class CarBroker implements Runnable {
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
+	            logger.error(new String(dp.getData(), 0, dp.getLength()));
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
+	            logger.error(received.getStatus().toString());
 	            logger.info("CarBroker received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
@@ -72,31 +81,35 @@ public class CarBroker implements Runnable {
 		Message response = new Message();
 		try {
 			switch(msg.getStatus()) {
-				case 0:
-					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(0, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "InitialMessageResponseCarBroker");
-					}
+				case PREPARE:
 					break;
-				case 1:
+				case READY:
 					break;
-				case 2:
+				case ABORT:
 					break;
-				case 3:
+				case COMMIT:
 					break;
-				case 4:
+				case ROLLBACK:
 					break;
-				case 5:
+				case ACKNOWLEDGMENT:
 					break;
-				case 8:
+				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(8, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "OK");
+						response = new Message(StatusTypes.TESTING, localAddress, socket.getLocalPort(), 0, "OK");
 					}
 					break;
+				case ERROR:
+					break;
+				case CONNECTIONTEST:
+					if(statusMessage.equals("InitialMessageRequest")) {
+						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageResponseCarBroker");
+					}
+					break;	
 				default:
-					response = new Message(-1, InetAddress.getLocalHost(), socket.getLocalPort(), 9, "ERROR ID_FormatException");
+					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), 9, "ERROR ID_FormatException");
 					break;
 			} 
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return response;

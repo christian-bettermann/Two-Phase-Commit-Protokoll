@@ -1,0 +1,14 @@
+package Message;
+
+public enum StatusTypes {
+	BOOKING,
+	PREPARE,
+	READY,
+	ABORT,
+	COMMIT,
+	ROLLBACK,
+	ACKNOWLEDGMENT,
+	TESTING,
+	ERROR,
+	CONNECTIONTEST
+}

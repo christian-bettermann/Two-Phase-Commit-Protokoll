@@ -7,7 +7,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 
-import Message.Message;
+import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -21,10 +21,17 @@ public class HotelBroker implements Runnable {
     private byte[] buffer;
     private Hotel hotel;
     private String brokerName;
+    private InetAddress localAddress;
     
     int hotelBrokerPort;
     
     public HotelBroker(String brokerName, int hotelBrokerPort) {
+    	try {
+			localAddress = InetAddress.getLocalHost();
+			logger.error(localAddress);
+		} catch (UnknownHostException e) {
+			e.printStackTrace();
+		}
     	logger.trace("Creating HotelBroker...");
     	this.brokerName = brokerName;
     	this.hotel = new Hotel(brokerName);
@@ -75,31 +82,35 @@ public class HotelBroker implements Runnable {
 		Message response = new Message();
 		try {
 			switch(msg.getStatus()) {
-				case 0:
-					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(0, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "InitialMessageResponseHotelBroker");
-					}
+				case PREPARE:
 					break;
-				case 1:
+				case READY:
 					break;
-				case 2:
+				case ABORT:
 					break;
-				case 3:
+				case COMMIT:
 					break;
-				case 4:
+				case ROLLBACK:
 					break;
-				case 5:
+				case ACKNOWLEDGMENT:
 					break;
-				case 8:
+				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(8, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "OK");
+						response = new Message(StatusTypes.TESTING, localAddress, socket.getLocalPort(), 0, "OK");
 					}
 					break;
+				case ERROR:
+					break;
+				case CONNECTIONTEST:
+					if(statusMessage.equals("InitialMessageRequest")) {
+						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageResponseHotelBroker");
+					}
+					break;	
 				default:
-					response = new Message(-1, InetAddress.getLocalHost(), socket.getLocalPort(), 9, "ERROR ID_FormatException");
+					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), 9, "ERROR ID_FormatException");
 					break;
 			}
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return response;

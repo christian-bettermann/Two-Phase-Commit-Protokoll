@@ -5,7 +5,7 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.concurrent.BlockingQueue;
-import Message.Message;
+import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -53,35 +53,35 @@ public class ServerMessageHandler implements Runnable{
 		Message response = new Message();
 		try {
 			switch(msg.getStatus()) {
-				case 0:
-					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(0, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "InitialMessageResponseServerMessageHandler");
-					}
+				case BOOKING:
 					break;
-				case 1:
+				case READY:
 					break;
-				case 2:
+				case ABORT:
 					break;
-				case 3:
+				case ACKNOWLEDGMENT:
 					break;
-				case 4:
-					break;
-				case 5:
-					break;
-				case 8:
+				case TESTING:
 					if(statusMessage.equals("HiFromCarBroker") || statusMessage.equals("HiFromHotel")) {
-						response = new Message(8, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "HiFromServerMessageHandler");
+						response = new Message(StatusTypes.TESTING, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "HiFromServerMessageHandler");
 					}
 					if(statusMessage.equals("OK")) {
 						logger.info("Finished test");
 						response = null;
 					}
 					break;
+				case ERROR:
+					break;
+				case CONNECTIONTEST:
+					if(statusMessage.equals("InitialMessageRequest")) {
+						response = new Message(StatusTypes.CONNECTIONTEST, InetAddress.getLocalHost(), socket.getLocalPort(), 0, "InitialMessageResponseServerMessageHandler");
+					}
+					break;					
 				default:
-					response = new Message(-1, InetAddress.getLocalHost(), socket.getLocalPort(), 9, "ERROR ID_FormatException");
+					response = new Message(StatusTypes.ERROR, InetAddress.getLocalHost(), socket.getLocalPort(), 9, "ERROR ID_FormatException");
 					break;
 			} 
-		} catch (UnknownHostException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		return response;
