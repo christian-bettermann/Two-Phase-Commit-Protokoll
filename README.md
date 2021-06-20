@@ -1,9 +1,15 @@
 # Two-Phase-Commit Protokoll
 Message-Format:
-* public Message(int statusCode, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage)
+* public Message(StatusTypes statusCode, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage)
 
-Status-codes:
-* 0: Connection test
-* 1: 
-* 8: Testing
-* 9: Error 
+Implemented StatusTYpes:
+* BOOKING
+* PREPARE
+* READY
+* ABORT
+* COMMIT
+* ROLLBACK
+* ACKNOWLEDGMENT
+* TESTING
+* ERROR
+* CONNECTIONTEST
