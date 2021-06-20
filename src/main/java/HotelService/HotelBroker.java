@@ -6,7 +6,6 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-
 import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

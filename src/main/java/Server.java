@@ -19,34 +19,29 @@ public class Server implements Runnable {
 	private String serverName;
 	private boolean online = true;
 	private BlockingQueue<Message> incomingMessages;
-    private InetAddress carBrokerAddress;
-    private InetAddress hotelBrokerAddress;
     private InetAddress localAddress;
-    
-	    
-    int serverPort, carBrokerPort, hotelBrokerPort;
-    
-    boolean carBrokerOnline, hotelBrokerOnline;
+    int serverPort;
+    boolean brokerToCheckOnline;
+    Broker[] broker = new Broker[2];
     
 	public Server (String serverName, int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
+		logger.trace("Creating Server <" + serverName + ">...");
 		try {
 			localAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
 		incomingMessages = new ArrayBlockingQueue<Message>(1024);
-		logger.trace("Creating Server <" + serverName + ">...");
 		this.serverName = serverName;
 		this.serverPort = serverPort;
-		this.carBrokerAddress = carBrokerAddress;
-		this.hotelBrokerAddress = hotelBrokerAddress;
-		this.carBrokerPort = carBrokerPort;
-		this.hotelBrokerPort = hotelBrokerPort;
-		carBrokerOnline = false;
-		hotelBrokerOnline = false;
+		brokerToCheckOnline = false;
+		
+		Broker car = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
+		Broker hotel = new Broker("HotelBroker" ,hotelBrokerAddress, hotelBrokerPort);
+		broker[0] = car;
+		broker[1] = hotel;
 	}
 	
-
 	public void run() {
 		logger.info("Starting Server <" + serverName + "> on port <" + serverPort + "> ...");
 		try {
@@ -56,40 +51,28 @@ public class Server implements Runnable {
 		}
 		
 		//Sending initial Messages to Brokers
-		//initial CarBroker message
-		do {
-			checkCarBrokerAvailability();
-			if(!carBrokerOnline) {
-				try {
-					TimeUnit.SECONDS.sleep(1);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
+		for(Broker b : broker) {
+			do {
+				checkBrokerAvailability(b);
+				if(!brokerToCheckOnline) {
+					try {
+						TimeUnit.SECONDS.sleep(1);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
 				}
-			}
-		} while (!carBrokerOnline);
-		
-		//initial HotelBroker message
-		do {
-			checkHotelBrokerAvailability();
-			if(!hotelBrokerOnline) {
-				try {
-					TimeUnit.SECONDS.sleep(1);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-			}
-		} while (!hotelBrokerOnline);
-		
+			} while (!brokerToCheckOnline);
+		}
 		//Brokers are initialy available
-		
 		startMessageHandling();
 	}
 	
-	public void checkCarBrokerAvailability() {
+	public void checkBrokerAvailability(Broker brokerToCheck) {
 		try {
+			brokerToCheckOnline = false;
 			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageRequest");
 			socket.setSoTimeout(2500);
-		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, carBrokerAddress, carBrokerPort);
+		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, brokerToCheck.getAddress(), brokerToCheck.getPort());
 		    socket.send(packet);
 		    //wait for answer
 		    packet = new DatagramPacket(buffer, buffer.length);
@@ -97,38 +80,14 @@ public class Server implements Runnable {
 		    String premsg = new String(packet.getData(), 0, packet.getLength());
 		    Message received = new Message(premsg);
 		    logger.trace("Server received: "+ received.toString());
-		    if(received.getStatus() == StatusTypes.CONNECTIONTEST && received.getStatusMessage().equals("InitialMessageResponseCarBroker")) {
-		    	carBrokerOnline = true;
-		    	logger.info("CarBroker is available for <" + serverName +">");
+		    if(received.getStatus() == StatusTypes.CONNECTIONTEST && received.getSenderAddress().getHostAddress().equals(brokerToCheck.getAddress().getHostAddress()) && received.getSenderPort() == brokerToCheck.getPort()) {
+		    	brokerToCheckOnline = true;
+		    	logger.info(brokerToCheck.getName() + " is available for <" + serverName +">");
 		    }
 	    } catch (SocketTimeoutException e) {
             //Timeout
-	    	logger.error("CarBroker is not available for <" + serverName +">!");
-            carBrokerOnline = false;
-        } catch (IOException e) {
-			e.printStackTrace();
-		}
-	}
-	
-	public void checkHotelBrokerAvailability() {
-		try {
-			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageRequest");
-			socket.setSoTimeout(2500);
-		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, hotelBrokerAddress, hotelBrokerPort);
-		    socket.send(packet);
-		    //wait for answer
-		    packet = new DatagramPacket(buffer, buffer.length);
-		    socket.receive(packet);
-		    Message received = new Message(new String(packet.getData(), 0, packet.getLength()));
-		    logger.trace("Server received: "+ received.toString());
-		    if(received.getStatus() == StatusTypes.CONNECTIONTEST && received.getStatusMessage().equals("InitialMessageResponseHotelBroker")) {
-		    	hotelBrokerOnline = true;
-		    	logger.info("HotelBroker is available for <" + serverName +">");
-		    }
-	    } catch (SocketTimeoutException e) {
-            //Timeout
-	    	logger.error("HotelBroker is not available for <" + serverName +">!");
-            hotelBrokerOnline = false;
+	    	logger.error(brokerToCheck.getName() + " is not available for <" + serverName +">!");
+	    	brokerToCheckOnline = false;
         } catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -140,14 +99,14 @@ public class Server implements Runnable {
 		incomingMessagesListHandler.start();
 		
 		//Add hotelBroker test message to Queue
-//		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, hotelBrokerAddress.toString(), hotelBrokerPort, 0, "HiFromHotel");
-//		incomingMessages.add(hotelBrokerTestMsg);
-//		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
+		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, broker[1].getAddress(), broker[1].getPort(), 0, "HiFromHotel");
+		incomingMessages.add(hotelBrokerTestMsg);
+		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
 		
-		//Add hotelBroker test message to Queue
-//		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, carBrokerAddress.toString(), carBrokerPort, 0, "HiFromCarBroker");
-//		incomingMessages.add(carBrokerTestMsg);
-//		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
+		//Add carBroker test message to Queue
+		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, broker[0].getAddress(), broker[0].getPort(), 0, "HiFromCarBroker");
+		incomingMessages.add(carBrokerTestMsg);
+		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
 		
 		while(online) {
 			try {
@@ -156,20 +115,20 @@ public class Server implements Runnable {
 			    socket.receive(packet);
 			    String received = new String(packet.getData(), 0, packet.getLength());
 			    logger.trace("Server received: "+ received);
-			    Message msg = new Message(received);
-			    if(msg.validate()) {
-			    	logger.trace("Received Message has a valid form: <" + msg.toString() +">");
+			    Message msgIn = new Message(received);
+			    if(msgIn.validate()) {
+			    	logger.trace("Received Message has a valid form: <" + msgIn.toString() +">");
 			    	try {
-						incomingMessages.put(msg);
-						logger.trace("Added Message to "+ serverName +"Queue: <" + msg.toString() +">");
+						incomingMessages.put(msgIn);
+						logger.trace("Added Message to "+ serverName +"Queue: <" + msgIn.toString() +">");
 					} catch (InterruptedException e) {
 						e.printStackTrace();
 						logger.trace("ServerQueue <" + serverName +"> is full!");
 					}
 			    } else {
 			    	logger.trace("Received Message has an invalid form: <" + received +">");
-			    	msg = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), -1, "Error_invalid_message");
-			    	packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, hotelBrokerAddress, hotelBrokerPort);
+			    	Message msgOut = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), -1, "Error_invalid_message");
+			    	packet = new DatagramPacket(msgOut.toString().getBytes(), msgOut.toString().getBytes().length, msgIn.getSenderAddress(), msgIn.getSenderPort());
 				    socket.send(packet);
 			    }
 		    } catch (SocketTimeoutException e) {
