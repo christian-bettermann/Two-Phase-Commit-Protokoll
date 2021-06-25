@@ -23,7 +23,7 @@ public class Message {
 		}
 		this.senderPort = senderPort; 
 		this.bookingID = bookingID; 
-		this.statusMessage = statusMessage;
+		this.statusMessage = statusMessage.replace(" ", "_");
 	}
 	
 	public Message(StatusTypes status, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage) {
@@ -31,7 +31,7 @@ public class Message {
 		this.senderAddress = senderAddress;
 		this.senderPort = senderPort; 
 		this.bookingID = bookingID; 
-		this.statusMessage = statusMessage;
+		this.statusMessage = statusMessage.replace(" ", "_");
 	}
 	
 	public Message() {
@@ -75,7 +75,6 @@ public class Message {
 		return false;
 	}
 	
-	
 	public StatusTypes getStatus() {
 		return status;
 	}
@@ -114,5 +113,37 @@ public class Message {
 
 	public void setStatusMessage(String statusMessage) {
 		this.statusMessage = statusMessage;
+	}
+	
+	public String getStatusMessageCarId() {
+		String[] statusMessageArray = statusMessage.split("_");
+		if(statusMessageArray.length == 4) {
+			return statusMessageArray[0];
+		}
+		return "ERROR";
+	}
+	
+	public String getStatusMessageHotelId() {
+		String[] statusMessageArray = statusMessage.split("_");
+		if(statusMessageArray.length == 4) {
+			return statusMessageArray[1];
+		}
+		return "ERROR";
+	}
+	
+	public long getStatusMessageStartTime() {
+		String[] statusMessageArray = statusMessage.split("_");
+		if(statusMessageArray.length == 4) {
+			return Long.parseLong(statusMessageArray[2]);
+		}
+		return 0;
+	}
+	
+	public long getStatusMessageEndTime() {
+		String[] statusMessageArray = statusMessage.split("_");
+		if(statusMessageArray.length == 4) {
+			return Long.parseLong(statusMessageArray[3]);
+		}
+		return 0;
 	}
 }
