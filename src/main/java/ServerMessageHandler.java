@@ -13,12 +13,14 @@ public class ServerMessageHandler implements Runnable{
 	private BlockingQueue<Message> incomingMessages;
 	private String name;
 	private Boolean online;
+	private Server server;
 	
 	
-	public ServerMessageHandler(String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket) {
+	public ServerMessageHandler(String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.incomingMessages = incomingMessages;
 		this.name = name;
 		this.socket = socket;
+		this.server = server;
 	}
 	
 	public void run() {
@@ -51,7 +53,23 @@ public class ServerMessageHandler implements Runnable{
 		Message response = new Message();
 		try {
 			switch(msg.getStatus()) {
+				case INFO:
+					logger.info("Handling Info message");
+					//send info request to brokers //Client address and port in statusMessage
+					Message infoMsgCar = new Message(StatusTypes.INFO, msg.getSenderAddress(), msg.getSenderPort(), 0, "GetInitialInfo");
+					DatagramPacket packetCar = new DatagramPacket(infoMsgCar.toString().getBytes(), infoMsgCar.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+					logger.trace("<" + name + "> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
+					socket.send(packetCar);
+					
+					Message infoMsgHotel = new Message(StatusTypes.INFO, msg.getSenderAddress(), msg.getSenderPort(), 0, "GetInitialInfo");
+					DatagramPacket packetHotel = new DatagramPacket(infoMsgHotel.toString().getBytes(), infoMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+					logger.trace("<" + name + "> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
+					socket.send(packetHotel);
+					
+					response = null;
+					break;
 				case BOOKING:
+					//assign new BookingID
 					break;
 				case READY:
 					break;

@@ -1,5 +1,5 @@
 package Message;
-import java.net.Inet4Address;
+
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
@@ -43,7 +43,11 @@ public class Message {
 		if(msgArray.length == 5) {
 			try {
 				status = StatusTypes.valueOf(msgArray[0].trim());
-				senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);
+				if(msgArray[1].trim().split("/").length > 1) {
+					senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);
+				} else {
+					senderAddress = InetAddress.getByName(msgArray[1].trim());
+				}
 				senderPort = Integer.parseInt(msgArray[2].trim());
 				bookingID = Integer.parseInt(msgArray[3].trim());
 				statusMessage = msgArray[4].trim();

@@ -94,7 +94,7 @@ public class Server implements Runnable {
 	}
 	
 	public void startMessageHandling() {
-		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(serverName+"MessageHandler", incomingMessages, socket);
+		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(serverName+"MessageHandler", incomingMessages, socket, this);
 		Thread incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
 		
@@ -138,5 +138,9 @@ public class Server implements Runnable {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public Broker[] getBroker() {
+		return broker;
 	}
 }

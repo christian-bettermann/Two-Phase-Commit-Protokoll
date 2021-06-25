@@ -77,6 +77,14 @@ public class CarBroker implements Runnable {
 		Message response = new Message();
 		try {
 			switch(msg.getStatus()) {
+				case INFO:
+					//answer with a list oft all cars
+					Message res = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), 0, "###############################################CARS");
+					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
+					socket.send(packetCar);
+					response = null;
+					break;
 				case PREPARE:
 					break;
 				case READY:

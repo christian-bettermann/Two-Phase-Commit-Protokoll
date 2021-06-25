@@ -1,6 +1,9 @@
 package Message;
 
 public enum StatusTypes {
+	INFO,
+	INFOCARS,
+	INFOROOMS,
 	BOOKING,
 	PREPARE,
 	READY,
