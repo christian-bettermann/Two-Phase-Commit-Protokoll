@@ -70,7 +70,7 @@ public class Server implements Runnable {
 	public void checkBrokerAvailability(Broker brokerToCheck) {
 		try {
 			brokerToCheckOnline = false;
-			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageRequest");
+			Message msg = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "InitialMessageRequest");
 			socket.setSoTimeout(2500);
 		    DatagramPacket packet = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, brokerToCheck.getAddress(), brokerToCheck.getPort());
 		    socket.send(packet);
@@ -99,12 +99,12 @@ public class Server implements Runnable {
 		incomingMessagesListHandler.start();
 		
 		//Add hotelBroker test message to Queue
-		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, broker[1].getAddress(), broker[1].getPort(), 0, "HiFromHotel");
+		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, broker[1].getAddress(), broker[1].getPort(), "0", "HiFromHotel");
 		incomingMessages.add(hotelBrokerTestMsg);
 		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
 		
 		//Add carBroker test message to Queue
-		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, broker[0].getAddress(), broker[0].getPort(), 0, "HiFromCarBroker");
+		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, broker[0].getAddress(), broker[0].getPort(), "0", "HiFromCarBroker");
 		incomingMessages.add(carBrokerTestMsg);
 		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
 		
@@ -127,7 +127,7 @@ public class Server implements Runnable {
 					}
 			    } else {
 			    	logger.trace("Received Message has an invalid form: <" + received +">");
-			    	Message msgOut = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), -1, "Error_invalid_message");
+			    	Message msgOut = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), null, "Error_invalid_message");
 			    	packet = new DatagramPacket(msgOut.toString().getBytes(), msgOut.toString().getBytes().length, msgIn.getSenderAddress(), msgIn.getSenderPort());
 				    socket.send(packet);
 			    }
@@ -142,5 +142,9 @@ public class Server implements Runnable {
 	
 	public Broker[] getBroker() {
 		return broker;
+	}
+	
+	public String getName() {
+		return serverName;
 	}
 }

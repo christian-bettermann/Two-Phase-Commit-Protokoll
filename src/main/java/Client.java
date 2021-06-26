@@ -48,10 +48,10 @@ public class Client implements Runnable {
 			e.printStackTrace();
 		}
 		
-		Message getInfoMessage = new Message(StatusTypes.INFO, localAddress, socket.getLocalPort(), 0, localAddress +":"+ localPort);
+		Message getInfoMessage = new Message(StatusTypes.INFO, localAddress, socket.getLocalPort(), "0", localAddress +":"+ localPort);
     	DatagramPacket packet = new DatagramPacket(getInfoMessage.toString().getBytes(), getInfoMessage.toString().getBytes().length, serverAddress, serverPort);
 	    try {
-	    	TimeUnit.SECONDS.sleep(6);
+	    	TimeUnit.SECONDS.sleep(2);
 			socket.send(packet);
 		} catch (IOException e1) {
 			e1.printStackTrace();
@@ -139,10 +139,15 @@ public class Client implements Runnable {
 				sendBooking(carID, hotelID, startTime, endTime);
 		    }
 		});
+		
+		
+		//start receiving from servers
+		//handle BOOKING & ACKNOWLEDGMENT & ERROR for bookingRequest
+		//####################################################
 	}
 	
 	public void sendBooking(String carID, String hotelID, String startTime, String endTime) {
-		Message m = new Message(StatusTypes.BOOKING, localAddress, localPort, 0, buildStatusMessage(carID, hotelID, startTime, endTime));
+		Message m = new Message(StatusTypes.BOOKING, localAddress, localPort, "0", buildStatusMessage(carID, hotelID, startTime, endTime));
         logger.info("Trying to book the trip from "+ new Date(m.getStatusMessageStartTime()) +" until "+ new Date(m.getStatusMessageEndTime()) +" with the car "+ carID +" and the hotel "+ hotelID +".");
         DatagramPacket booking = new DatagramPacket(m.toString().getBytes(), m.toString().getBytes().length, serverAddress, serverPort);
 	    try {

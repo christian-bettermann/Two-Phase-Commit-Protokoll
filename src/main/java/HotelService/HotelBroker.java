@@ -82,38 +82,52 @@ public class HotelBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
-					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), 0, "###############################################ROOMS");
+					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), "0", "###############################################ROOMS");
 					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
 					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
 					response = null;
 					break;
 				case PREPARE:
-					break;
-				case READY:
-					break;
-				case ABORT:
+					//check if hotel is available with bookingMessage values
+					//#########################################
+					
+					//hotel available
+					response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					
+					//hotel not available
+					//response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
 				case COMMIT:
+					//proceed with booking of room
+					//write to stable store
+					//############################
+					
+					//sending ACKNOWLEDGMENT to server
+					//############################
 					break;
 				case ROLLBACK:
-					break;
-				case ACKNOWLEDGMENT:
+					//cancel booking of room
+					//write to stable store
+					//############################
+					
+					//sending ACKNOWLEDGMENT to server
+					//############################
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(StatusTypes.TESTING, localAddress, socket.getLocalPort(), 0, "OK");
+						response = new Message(StatusTypes.TESTING, localAddress, socket.getLocalPort(), "0", "OK");
 					}
 					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:
 					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), 0, "InitialMessageResponseHotelBroker");
+						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "InitialMessageResponseHotelBroker");
 					}
 					break;	
 				default:
-					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), 9, "ERROR ID_FormatException");
+					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), null, "ERROR ID_FormatException");
 					break;
 			}
 		} catch (Exception e) {

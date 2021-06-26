@@ -11,10 +11,10 @@ public class Message {
 	private StatusTypes status;
 	private InetAddress senderAddress;
 	private int senderPort; 
-	private int bookingID; 
+	private String bookingID; 
 	private String statusMessage;
 
-	public Message(StatusTypes status, String senderAddress, int senderPort, int bookingID, String statusMessage) {
+	public Message(StatusTypes status, String senderAddress, int senderPort, String bookingID, String statusMessage) {
 		this.status = status;
 		try {
 			this.senderAddress = InetAddress.getByName(senderAddress.toString().split("/")[1]);	//
@@ -26,7 +26,7 @@ public class Message {
 		this.statusMessage = statusMessage.replace(" ", "_");
 	}
 	
-	public Message(StatusTypes status, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage) {
+	public Message(StatusTypes status, InetAddress senderAddress, int senderPort, String bookingID, String statusMessage) {
 		this.status = status;
 		this.senderAddress = senderAddress;
 		this.senderPort = senderPort; 
@@ -49,14 +49,14 @@ public class Message {
 					senderAddress = InetAddress.getByName(msgArray[1].trim());
 				}
 				senderPort = Integer.parseInt(msgArray[2].trim());
-				bookingID = Integer.parseInt(msgArray[3].trim());
+				bookingID = msgArray[3].trim();
 				statusMessage = msgArray[4].trim();
 			} catch(Exception e) {
 				e.printStackTrace();
 				status = StatusTypes.ERROR;
 				senderAddress = null;
 				senderPort = -1; 
-				bookingID = -1; 
+				bookingID = null; 
 				statusMessage = null;
 			}
 			logger.trace("Built Message Object(status:<" + status + ">, senderAddress:<" + senderAddress + ">, senderPort:<" + senderPort + ">, bookingID:<" + bookingID + ">, statusMessage:<" + statusMessage + ">");
@@ -103,11 +103,11 @@ public class Message {
 		this.senderPort = senderPort;
 	}
 
-	public int getBookingID() {
+	public String getBookingID() {
 		return bookingID;
 	}
 
-	public void setBookingID(int bookingID) {
+	public void setBookingID(String bookingID) {
 		this.bookingID = bookingID;
 	}
 
