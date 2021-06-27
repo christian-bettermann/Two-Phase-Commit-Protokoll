@@ -111,6 +111,7 @@ public class HotelBroker implements Runnable {
 					//write to stable store
 					//############################
 					this.hotel.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
 					//############################
 					break;

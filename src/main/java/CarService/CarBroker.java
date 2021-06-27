@@ -108,6 +108,7 @@ public class CarBroker implements Runnable {
 					//write to stable store
 					//############################
 					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
 					//############################
 					break;
