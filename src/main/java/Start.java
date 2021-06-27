@@ -1,11 +1,9 @@
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.core.config.Configurator;
-
 import CarService.CarBroker;
 import HotelService.HotelBroker;
 
@@ -16,7 +14,7 @@ public class Start {
 	
 	public static void main(String[] args) {
 		//init logger
-		Configurator.setRootLevel(Level.INFO);
+		Configurator.setRootLevel(Level.TRACE);
 
 		logger.info("Starting System...");
 		int firstServerPort = 30800;
@@ -29,20 +27,25 @@ public class Start {
 		}
 		int carBrokerPort = 30901;
 		int hotelBrokerPort = 30902;
+		int clientPort = 33091;
 		
 		//Start Brokers
-		logger.info("Creating Brokers");
-		CarBroker carBroker = new CarBroker(carBrokerPort);
-		HotelBroker hotelBroker = new HotelBroker(hotelBrokerPort);
-		logger.info("Creating Servers");
-		Server server1 = new Server(firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
-		Server server2 = new Server(secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		CarBroker carBroker = new CarBroker("Sixt", carBrokerPort);
+		HotelBroker hotelBroker = new HotelBroker("Hotel Meier", hotelBrokerPort);
+		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		Client client = new Client(clientPort);
 		
-		server1.start();
-		server2.start();
-		carBroker.start();
-		hotelBroker.start();
+		Thread serverOneThread = new Thread(serverOne);
+		Thread serverTwoThread = new Thread(serverTwo);
+		Thread carBrokerThread = new Thread(carBroker);
+		Thread hotelBrokerThread = new Thread(hotelBroker);
+		Thread clientThread = new Thread(client);
 		
-		logger.info("Started Everything!");
+		serverOneThread.start();
+		serverTwoThread.start();
+		carBrokerThread.start();
+		hotelBrokerThread.start();
+		clientThread.start();
 	}
 }
