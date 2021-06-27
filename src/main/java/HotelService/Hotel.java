@@ -8,7 +8,9 @@ import org.json.simple.parser.ParseException;
 
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -34,7 +36,35 @@ public class Hotel {
     }
 
     public void commitRequestOfBookingID(int bookingID) {
-
+        Request request = getRequest(bookingID);
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader("data.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject roomData = (JSONObject) jsonContent;
+            Object roomDataContent = roomData.get("rooms");
+            JSONArray roomJsonArray = (JSONArray) roomDataContent;
+            Object singleRoomObject = roomJsonArray.get(request.getInterestId());
+            JSONObject singleRoom = (JSONObject) singleRoomObject;
+            Object reservationsObject = singleRoom.get("Reservations");
+            JSONArray reservations = (JSONArray) reservationsObject;
+            JSONObject reservation = new JSONObject();
+            reservation.put("StartTime", request.getStartTime().toString());
+            reservation.put("EndTime", request.getEndTime().toString());
+            reservations.add(reservation);
+            try (FileWriter file = new FileWriter("data.json")) {
+                file.write(roomData.toJSONString());
+                file.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     public void roolbackRequestOfBookingID(int bookingID) {
