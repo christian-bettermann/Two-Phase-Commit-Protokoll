@@ -27,7 +27,7 @@ public class CarPool {
     public boolean checkCarOfId(int bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.requestList.add(new Request(bookingId, startTime, endTime));
+            this.requestList.add(new Request(bookingId, carId, startTime, endTime));
         }
         return result;
     }

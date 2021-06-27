@@ -28,7 +28,7 @@ public class Hotel {
     public boolean checkRoomOfId(int bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.requestList.add(new Request(bookingId, startTime, endTime));
+            this.requestList.add(new Request(bookingId, roomId, startTime, endTime));
         }
         return result;
     }
