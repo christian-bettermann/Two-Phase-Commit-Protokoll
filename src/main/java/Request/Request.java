@@ -15,4 +15,20 @@ public class Request {
         this.startTime = pStartTime;
         this.endTime = pEndTime;
     }
+
+    public int getId() {
+        return id;
+    }
+
+    public int getInterestId() {
+        return interestId;
+    }
+
+    public Date getStartTime() {
+        return startTime;
+    }
+
+    public Date getEndTime() {
+        return endTime;
+    }
 }

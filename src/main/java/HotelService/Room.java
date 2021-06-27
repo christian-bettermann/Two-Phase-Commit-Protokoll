@@ -56,6 +56,18 @@ public class Room {
         this.reservationList.add(new BlockedTimeZone(startTime, EndTime));
     }
 
+    public boolean removeBooking(Date startTime, Date EndTime) {
+        boolean success = false;
+        for(int i = 0; i < this.reservationList.size(); i++) {
+            if(this.reservationList.get(i).getStartTime().equals(startTime) && this.reservationList.get(i).getEndTime().equals(EndTime)) {
+                this.reservationList.remove(i);
+                success = true;
+                break;
+            }
+        }
+        return success;
+    }
+
     public String getId() {
         return id;
     }

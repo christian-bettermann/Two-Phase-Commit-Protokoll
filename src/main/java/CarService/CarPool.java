@@ -37,8 +37,21 @@ public class CarPool {
     }
 
     public void roolbackRequestOfBookingID(int bookingID) {
-
+        Request request = getRequest(bookingID);
+        carList.get(request.getInterestId()).removeBooking(request.getStartTime(), request.getEndTime());
     }
+
+    private Request getRequest(int bookingId) {
+        Request request = null;
+        for(int i = 0; i < requestList.size(); i++) {
+            if(this.requestList.get(i).getId() == bookingId) {
+                request = this.requestList.get(i);
+                break;
+            }
+        }
+        return request;
+    }
+
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
