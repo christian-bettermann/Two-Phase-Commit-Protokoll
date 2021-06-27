@@ -52,7 +52,7 @@ public class Room {
         return free;
     }
 
-    private void bookRoom(Date startTime, Date EndTime) {
+    public void bookRoom(Date startTime, Date EndTime) {
         this.reservationList.add(new BlockedTimeZone(startTime, EndTime));
     }
 

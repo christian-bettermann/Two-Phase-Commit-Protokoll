@@ -8,6 +8,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Date;
+
 import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -33,6 +35,7 @@ public class HotelBroker implements Runnable {
     	this.initialize();
     	logger.trace("Creating HotelBroker...");
     	this.hotel = new Hotel(brokerName);
+		this.hotel.initialize();
     }
     
     public void run() {
@@ -88,14 +91,11 @@ public class HotelBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
-					//check if hotel is available with bookingMessage values
-					//#########################################
-					
-					//hotel available
-					response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
-					
-					//hotel not available
-					//response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					if(this.hotel.checkRoomOfId(Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					} else {
+						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					}
 					break;
 				case COMMIT:
 					//proceed with booking of room
