@@ -30,8 +30,8 @@ public class Start {
 		int clientPort = 33091;
 		
 		//Start Brokers
-		CarBroker carBroker = new CarBroker("Sixt", carBrokerPort);
-		HotelBroker hotelBroker = new HotelBroker("Hotel Meier", hotelBrokerPort);
+		CarBroker carBroker = new CarBroker();
+		HotelBroker hotelBroker = new HotelBroker();
 		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Client client = new Client(clientPort);

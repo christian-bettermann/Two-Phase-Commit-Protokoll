@@ -50,7 +50,7 @@ public class Car {
         return free;
     }
 
-    private void bookCar(Date startTime, Date EndTime) {
+    public void bookCar(Date startTime, Date EndTime) {
         this.reservationList.add(new BlockedTimeZone(startTime, EndTime));
     }
 

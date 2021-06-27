@@ -1,5 +1,7 @@
 package HotelService;
 
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -9,6 +11,9 @@ import java.net.UnknownHostException;
 import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 
 public class HotelBroker implements Runnable {
@@ -24,16 +29,10 @@ public class HotelBroker implements Runnable {
     
     int hotelBrokerPort;
     
-    public HotelBroker(String brokerName, int hotelBrokerPort) {
-    	try {
-			localAddress = InetAddress.getLocalHost();
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
+    public HotelBroker() {
+    	this.initialize();
     	logger.trace("Creating HotelBroker...");
-    	this.brokerName = brokerName;
     	this.hotel = new Hotel(brokerName);
-    	this.hotelBrokerPort = hotelBrokerPort;
     }
     
     public void run() {
@@ -134,5 +133,23 @@ public class HotelBroker implements Runnable {
 			e.printStackTrace();
 		}
 		return response;
+	}
+
+	private void initialize() {
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader("config.json"))
+		{
+			Object jsonContent = jParser.parse(reader);
+			JSONObject configData = (JSONObject) jsonContent;
+			this.brokerName = configData.get("serviceName").toString();
+			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
+			this.hotelBrokerPort = Integer.parseInt(configData.get("port").toString());
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 	}
 }

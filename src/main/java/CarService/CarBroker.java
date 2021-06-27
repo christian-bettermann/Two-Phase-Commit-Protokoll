@@ -8,6 +8,8 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Date;
+
 import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -31,6 +33,7 @@ public class CarBroker implements Runnable {
     	this.initialize();
     	logger.trace("Creating CarBroker...");
 		this.pool = new CarPool(this.brokerName);
+		this.pool.initialize();
     }
     
     public void run() {
@@ -85,14 +88,11 @@ public class CarBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
-					//check if car is available with bookingMessage values
-					//#########################################
-					
-					//car available
-					response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
-					
-					//car not available
-					//response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					if(this.pool.checkCarOfId(Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					} else {
+						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					}
 					break;
 				case COMMIT:
 					//proceed with booking of car
