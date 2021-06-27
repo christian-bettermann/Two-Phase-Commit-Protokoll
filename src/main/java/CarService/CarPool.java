@@ -1,5 +1,6 @@
 package CarService;
 
+import Request.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -15,14 +16,28 @@ public class CarPool {
     //Attribute
     private String poolName;
     private ArrayList<Car> carList;
+    private ArrayList<Request> requestList;
 
     public CarPool(String pName) {
         this.poolName = pName;
         this.carList = new ArrayList<>();
+        this.requestList = new ArrayList<Request>();
     }
 
-    public boolean checkCarOfId(int carId, Date startTime, Date endTime) {
-        return this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
+    public boolean checkCarOfId(int bookingId, int carId, Date startTime, Date endTime) {
+        boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
+        if(result) {
+            this.requestList.add(new Request(bookingId, startTime, endTime));
+        }
+        return result;
+    }
+
+    public void commitRequestOfBookingID(int bookingID) {
+
+    }
+
+    public void roolbackRequestOfBookingID(int bookingID) {
+
     }
 
     public void initialize() {

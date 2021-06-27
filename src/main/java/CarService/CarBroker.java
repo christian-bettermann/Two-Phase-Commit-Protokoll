@@ -88,7 +88,7 @@ public class CarBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
-					if(this.pool.checkCarOfId(Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.pool.checkCarOfId(Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					} else {
 						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
@@ -98,7 +98,8 @@ public class CarBroker implements Runnable {
 					//proceed with booking of car
 					//write to stable store
 					//############################
-					
+					this.pool.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
 					//############################
 					break;
@@ -106,7 +107,7 @@ public class CarBroker implements Runnable {
 					//cancel booking of car
 					//write to stable store
 					//############################
-					
+					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
 					//sending ACKNOWLEDGMENT to server
 					//############################
 					break;

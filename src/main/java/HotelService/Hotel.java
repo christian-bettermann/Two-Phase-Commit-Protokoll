@@ -1,7 +1,6 @@
 package HotelService;
 
-import CarService.Car;
-import CarService.CarTypes;
+import Request.Request;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -17,15 +16,29 @@ public class Hotel {
     //Attribute
     private String hotelName;
     private ArrayList<Room> roomList;
+    private ArrayList<Request> requestList;
 
     public Hotel(String pName) {
         this.hotelName = pName;
         this.roomList = new ArrayList<Room>();
+        this.requestList = new ArrayList<Request>();
     }
 
 
-    public boolean checkRoomOfId(int roomId, Date startTime, Date endTime) {
-        return this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
+    public boolean checkRoomOfId(int bookingId, int roomId, Date startTime, Date endTime) {
+        boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
+        if(result) {
+            this.requestList.add(new Request(bookingId, startTime, endTime));
+        }
+        return result;
+    }
+
+    public void commitRequestOfBookingID(int bookingID) {
+
+    }
+
+    public void roolbackRequestOfBookingID(int bookingID) {
+
     }
 
     public void initialize() {
