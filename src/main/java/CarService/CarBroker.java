@@ -81,6 +81,7 @@ public class CarBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all cars
+					//#####################################
 					Message res = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), "0", "###############################################CARS");
 					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
 					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
@@ -90,27 +91,28 @@ public class CarBroker implements Runnable {
 				case PREPARE:
 					if(this.pool.checkCarOfId(Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						//write to stable store
+						//############################
 					} else {
 						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						//write to stable store
+						//############################
 					}
 					break;
 				case COMMIT:
 					//proceed with booking of car
 					//write to stable store
-					//############################
 					this.pool.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
-					//############################
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
 				case ROLLBACK:
 					//cancel booking of car
 					//write to stable store
 					//############################
 					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
-					//############################
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
