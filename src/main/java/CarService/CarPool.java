@@ -36,7 +36,7 @@ public class CarPool {
     public void commitRequestOfBookingID(int bookingID) {
         Request request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("data.json"))
+        try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject roomData = (JSONObject) jsonContent;
@@ -50,7 +50,7 @@ public class CarPool {
             reservation.put("StartTime", request.getStartTime().toString());
             reservation.put("EndTime", request.getEndTime().toString());
             reservations.add(reservation);
-            try (FileWriter file = new FileWriter("data.json")) {
+            try (FileWriter file = new FileWriter("src/main/resources/CarService/data.json")) {
                 file.write(roomData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -84,7 +84,7 @@ public class CarPool {
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("data.json"))
+        try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject carData = (JSONObject) jsonContent;
@@ -96,7 +96,7 @@ public class CarPool {
                 Car singleCar = new Car(carInfo.get("Manufacturer").toString(),
                         carInfo.get("Model").toString(),
                         Integer.parseInt(carInfo.get("HorsePower").toString()),
-                        CarTypes.valueOf(carInfo.get("STATION_WAGON").toString())
+                        CarTypes.valueOf(carInfo.get("Type").toString())
                 );
                 Object reservationData = carInfo.get("Reservations");
                 JSONArray reservationJsonArray = (JSONArray) reservationData;

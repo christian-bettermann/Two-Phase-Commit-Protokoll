@@ -20,8 +20,8 @@ public class Start {
 		int firstServerPort = 30800;
 		int secondServerPort = 30801;
 		try {
-			carBrokerAddress = InetAddress.getLocalHost();
-			hotelBrokerAddress = InetAddress.getLocalHost();
+			carBrokerAddress = InetAddress.getByName("localhost");
+			hotelBrokerAddress = InetAddress.getByName("localhost");
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -35,17 +35,20 @@ public class Start {
 		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Client client = new Client(clientPort);
+		ControlPanel controlPanel = new ControlPanel(serverOne, serverTwo, carBroker, hotelBroker);
 		
 		Thread serverOneThread = new Thread(serverOne);
 		Thread serverTwoThread = new Thread(serverTwo);
 		Thread carBrokerThread = new Thread(carBroker);
 		Thread hotelBrokerThread = new Thread(hotelBroker);
 		Thread clientThread = new Thread(client);
+		Thread controlPanelThread = new Thread(controlPanel);
 		
 		serverOneThread.start();
 		serverTwoThread.start();
 		carBrokerThread.start();
 		hotelBrokerThread.start();
 		clientThread.start();
+		controlPanelThread.start();
 	}
 }

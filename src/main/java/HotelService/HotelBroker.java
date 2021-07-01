@@ -1,5 +1,6 @@
 package HotelService;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -8,6 +9,7 @@ import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.nio.file.FileSystem;
 import java.util.Date;
 
 import Message.*;
@@ -141,7 +143,7 @@ public class HotelBroker implements Runnable {
 
 	private void initialize() {
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("config.json"))
+		try (FileReader reader = new FileReader("src/main/resources/HotelService/config.json"))
 		{
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;

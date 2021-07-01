@@ -37,7 +37,7 @@ public class Server implements Runnable {
 		brokerToCheckOnline = false;
 		
 		Broker car = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
-		Broker hotel = new Broker("HotelBroker" ,hotelBrokerAddress, hotelBrokerPort);
+		Broker hotel = new Broker("HotelBroker", hotelBrokerAddress, hotelBrokerPort);
 		broker[0] = car;
 		broker[1] = hotel;
 	}

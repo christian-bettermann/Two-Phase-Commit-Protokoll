@@ -138,7 +138,7 @@ public class CarBroker implements Runnable {
 
 	private void initialize() {
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("config.json"))
+		try (FileReader reader = new FileReader("src/main/resources/CarService/config.json"))
 		{
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;
