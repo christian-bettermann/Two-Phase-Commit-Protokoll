@@ -147,4 +147,8 @@ public class Server implements Runnable {
 	public String getName() {
 		return serverName;
 	}
+	
+	public void closeSocket() {
+		socket.close();
+	}
 }

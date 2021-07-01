@@ -158,4 +158,16 @@ public class HotelBroker implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	public InetAddress getLocalAddress() {
+		return localAddress;
+	}
+	
+	public int getPort() {
+		return hotelBrokerPort;
+	}
+	
+	public void closeSocket() {
+		socket.close();
+	}
 }

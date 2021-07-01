@@ -82,7 +82,8 @@ public class Client implements Runnable {
 			} 
 	    }		
 
-		JFrame f = new JFrame();  
+		JFrame f = new JFrame();
+		f.setTitle("Client");
 		String carList[]={"India","Aus","U.S.A","England","Newzealand"};  
 		String roomList[]={"India","Aus","U.S.A","England","Newzealand"}; 
 		JLabel c = new JLabel("Car:");

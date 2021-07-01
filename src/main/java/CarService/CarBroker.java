@@ -153,4 +153,16 @@ public class CarBroker implements Runnable {
 			e.printStackTrace();
 		}
 	}
+	
+	public InetAddress getLocalAddress() {
+		return localAddress;
+	}
+	
+	public int getPort() {
+		return carBrokerPort;
+	}
+	
+	public void closeSocket() {
+		socket.close();
+	}
 }

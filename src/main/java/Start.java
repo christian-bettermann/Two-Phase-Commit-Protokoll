@@ -11,7 +11,7 @@ public class Start {
 	static InetAddress carBrokerAddress;
 	static InetAddress hotelBrokerAddress;
 	private static final Logger logger = LogManager.getRootLogger();
-	
+	public int firstServerPort, secondServerPort, carBrokerPort, hotelBrokerPort;
 	public static void main(String[] args) {
 		//init logger
 		Configurator.setRootLevel(Level.TRACE);
@@ -35,13 +35,15 @@ public class Start {
 		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
 		Client client = new Client(clientPort);
-		ControlPanel controlPanel = new ControlPanel(serverOne, serverTwo, carBroker, hotelBroker);
+		
 		
 		Thread serverOneThread = new Thread(serverOne);
 		Thread serverTwoThread = new Thread(serverTwo);
 		Thread carBrokerThread = new Thread(carBroker);
 		Thread hotelBrokerThread = new Thread(hotelBroker);
 		Thread clientThread = new Thread(client);
+		
+		ControlPanel controlPanel = new ControlPanel(serverOne, serverTwo, carBroker, hotelBroker, serverOneThread, serverTwoThread, carBrokerThread, hotelBrokerThread) ;
 		Thread controlPanelThread = new Thread(controlPanel);
 		
 		serverOneThread.start();
