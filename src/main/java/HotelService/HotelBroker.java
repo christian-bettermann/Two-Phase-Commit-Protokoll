@@ -1,5 +1,6 @@
 package HotelService;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
@@ -7,6 +8,8 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.UnknownHostException;
+import java.nio.file.FileSystem;
 import java.util.Date;
 
 import Message.*;
@@ -83,6 +86,7 @@ public class HotelBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
+					//########################################
 					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), "0", "###############################################ROOMS");
 					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
 					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
@@ -92,27 +96,28 @@ public class HotelBroker implements Runnable {
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(Integer.parseInt(msg.getBookingID()), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						//write to stable store
+						//#################################
 					} else {
 						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						//write to stable store
+						//#################################
 					}
 					break;
 				case COMMIT:
 					//proceed with booking of room
 					//write to stable store
-					//############################
 					this.hotel.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
-					//############################
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
 				case ROLLBACK:
 					//cancel booking of room
 					//write to stable store
-					//############################
+					//#################################
 					this.hotel.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					//sending ACKNOWLEDGMENT to server
-					//############################
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
@@ -138,7 +143,7 @@ public class HotelBroker implements Runnable {
 
 	private void initialize() {
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("config.json"))
+		try (FileReader reader = new FileReader("src/main/resources/HotelService/config.json"))
 		{
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;
@@ -152,5 +157,17 @@ public class HotelBroker implements Runnable {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public InetAddress getLocalAddress() {
+		return localAddress;
+	}
+	
+	public int getPort() {
+		return hotelBrokerPort;
+	}
+	
+	public void closeSocket() {
+		socket.close();
 	}
 }

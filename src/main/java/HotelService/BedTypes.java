@@ -1,6 +1,6 @@
 package HotelService;
 
 public enum BedTypes {
-    SINGLE,
-    DOUBLE
+    Single,
+    Double
 }

@@ -38,7 +38,7 @@ public class Hotel {
     public void commitRequestOfBookingID(int bookingID) {
         Request request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("data.json"))
+        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject roomData = (JSONObject) jsonContent;
@@ -52,7 +52,7 @@ public class Hotel {
             reservation.put("StartTime", request.getStartTime().toString());
             reservation.put("EndTime", request.getEndTime().toString());
             reservations.add(reservation);
-            try (FileWriter file = new FileWriter("data.json")) {
+            try (FileWriter file = new FileWriter("src/main/resources/HotelService/data.json")) {
                 file.write(roomData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -85,7 +85,7 @@ public class Hotel {
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("data.json"))
+        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject roomData = (JSONObject) jsonContent;
@@ -98,7 +98,7 @@ public class Hotel {
                         Integer.parseInt(roomInfo.get("Beds").toString()),
                         BedTypes.valueOf(roomInfo.get("BedType").toString()),
                         Integer.parseInt(roomInfo.get("Bath").toString()),
-                        RoomTypes.valueOf(roomInfo.get("Beds").toString())
+                        RoomTypes.valueOf(roomInfo.get("Type").toString())
                 );
                 Object reservationData = roomInfo.get("Reservations");
                 JSONArray reservationJsonArray = (JSONArray) reservationData;
