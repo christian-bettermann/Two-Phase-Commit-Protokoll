@@ -84,4 +84,8 @@ public class Room {
     public RoomTypes getRoomType() {
         return roomType;
     }
+
+    public String getInfo() {
+        return this.numberOfBeds + "_" + this.bedType + "_" + this.numberOfBaths + "_" + this.roomType;
+    }
 }

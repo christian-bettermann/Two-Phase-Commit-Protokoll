@@ -119,4 +119,17 @@ public class Hotel {
             e.printStackTrace();
         }
     }
+
+    public String getInfoOfRooms() {
+        String result = "";
+        int lengthOfInfo = this.roomList.size();
+        for(int i = 0; i < lengthOfInfo; i++) {
+            if(i < lengthOfInfo - 1) {
+                result = result + this.roomList.get(i).getInfo() + "!";
+            } else {
+                result = result + this.roomList.get(i).getInfo();
+            }
+        }
+        return result;
+    }
 }
