@@ -117,4 +117,17 @@ public class CarPool {
             e.printStackTrace();
         }
     }
+
+    public String getInfoOfCars() {
+        String result = "";
+        int lengthOfInfo = this.carList.size();
+        for(int i = 0; i < lengthOfInfo; i++) {
+            if(i < lengthOfInfo - 1) {
+                result = result + this.carList.get(i).getInfo() + "!";
+            } else {
+                result = result + this.carList.get(i).getInfo();
+            }
+        }
+        return result;
+    }
 }

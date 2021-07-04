@@ -78,4 +78,8 @@ public class Car {
     public CarTypes getType() {
         return type;
     }
+
+    public String getInfo() {
+        return this.manufacturer + "_" + this.model + "_" + this.horsePower + "_" + this.type;
+    }
 }
