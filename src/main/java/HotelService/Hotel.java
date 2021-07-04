@@ -1,6 +1,6 @@
 package HotelService;
 
-import Request.Request;
+import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
@@ -10,7 +10,6 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -18,25 +17,25 @@ public class Hotel {
     //Attribute
     private String hotelName;
     private ArrayList<Room> roomList;
-    private ArrayList<Request> requestList;
+    private ArrayList<RoomRequest> requestList;
 
     public Hotel(String pName) {
         this.hotelName = pName;
         this.roomList = new ArrayList<Room>();
-        this.requestList = new ArrayList<Request>();
+        this.requestList = new ArrayList<RoomRequest>();
     }
 
 
     public boolean checkRoomOfId(int bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.requestList.add(new Request(bookingId, roomId, startTime, endTime));
+            this.requestList.add(new RoomRequest(bookingId, roomId, startTime, endTime));
         }
         return result;
     }
 
     public void commitRequestOfBookingID(int bookingID) {
-        Request request = getRequest(bookingID);
+        RoomRequest request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
         {
@@ -44,7 +43,7 @@ public class Hotel {
             JSONObject roomData = (JSONObject) jsonContent;
             Object roomDataContent = roomData.get("rooms");
             JSONArray roomJsonArray = (JSONArray) roomDataContent;
-            Object singleRoomObject = roomJsonArray.get(request.getInterestId());
+            Object singleRoomObject = roomJsonArray.get(request.getRoomId());
             JSONObject singleRoom = (JSONObject) singleRoomObject;
             Object reservationsObject = singleRoom.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
@@ -68,12 +67,12 @@ public class Hotel {
     }
 
     public void roolbackRequestOfBookingID(int bookingID) {
-        Request request = getRequest(bookingID);
-        roomList.get(request.getInterestId()).removeBooking(request.getStartTime(), request.getEndTime());
+        RoomRequest request = getRequest(bookingID);
+        roomList.get(request.getRoomId()).removeBooking(request.getStartTime(), request.getEndTime());
     }
 
-    private Request getRequest(int bookingId) {
-        Request request = null;
+    private RoomRequest getRequest(int bookingId) {
+        RoomRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId() == bookingId) {
                 request = this.requestList.get(i);
