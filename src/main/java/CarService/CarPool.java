@@ -28,7 +28,7 @@ public class CarPool {
     public boolean checkCarOfId(int bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.requestList.add(new CarRequest(bookingId, carId, startTime, endTime));
+            this.addRequestToList(bookingId, carId, startTime, endTime);
         }
         return result;
     }
@@ -39,19 +39,19 @@ public class CarPool {
         try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
         {
             Object jsonContent = jParser.parse(reader);
-            JSONObject roomData = (JSONObject) jsonContent;
-            Object roomDataContent = roomData.get("cars");
-            JSONArray roomJsonArray = (JSONArray) roomDataContent;
-            Object singleRoomObject = roomJsonArray.get(request.getCarId());
-            JSONObject singleRoom = (JSONObject) singleRoomObject;
-            Object reservationsObject = singleRoom.get("Reservations");
+            JSONObject carData = (JSONObject) jsonContent;
+            Object roomDataContent = carData.get("cars");
+            JSONArray carJsonArray = (JSONArray) roomDataContent;
+            Object singleCarObject = carJsonArray.get(request.getCarId());
+            JSONObject singleCar = (JSONObject) singleCarObject;
+            Object reservationsObject = singleCar.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
             JSONObject reservation = new JSONObject();
             reservation.put("StartTime", request.getStartTime().toString());
             reservation.put("EndTime", request.getEndTime().toString());
             reservations.add(reservation);
             try (FileWriter file = new FileWriter("src/main/resources/CarService/data.json")) {
-                file.write(roomData.toJSONString());
+                file.write(carData.toJSONString());
                 file.flush();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -63,11 +63,13 @@ public class CarPool {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        removeRequestFromList(bookingID);
     }
 
     public void roolbackRequestOfBookingID(int bookingID) {
         CarRequest request = getRequest(bookingID);
         carList.get(request.getCarId()).removeBooking(request.getStartTime(), request.getEndTime());
+        removeRequestFromList(bookingID);
     }
 
     private CarRequest getRequest(int bookingId) {
@@ -129,5 +131,72 @@ public class CarPool {
             }
         }
         return result;
+    }
+
+    public void addRequestToList(int bookingId, int carId, Date startTime, Date endTime) {
+        this.requestList.add(new CarRequest(bookingId, carId, startTime, endTime));
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object carRequestDataContent = requestsData.get("CarRequests");
+            JSONArray requests = (JSONArray) carRequestDataContent;
+            JSONObject request = new JSONObject();
+            request.put("BookingId", bookingId);
+            request.put("CarId", carId);
+            request.put("StartTime", startTime.getTime());
+            request.put("EndTime", endTime.getTime());
+            requests.add(request);
+            try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
+                file.write(requestsData.toJSONString());
+                file.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeRequestFromList(int bookingId) {
+        for(int i = 0; i < requestList.size(); i++) {
+            if(this.requestList.get(i).getId() == bookingId) {
+                this.requestList.remove(i);
+                break;
+            }
+        }
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object carRequestDataContent = requestsData.get("CarRequests");
+            JSONArray requests = (JSONArray) carRequestDataContent;
+            for(int i = 0; i < requests.size(); i++) {
+                Object requestData = requests.get(i);
+                JSONObject singleRequest = (JSONObject) requestData;
+                if(singleRequest.get("BookingId").toString().equals(bookingId)) {
+                    requests.remove(i);
+                    break;
+                }
+            }
+            try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
+                file.write(requestsData.toJSONString());
+                file.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 }
