@@ -10,6 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -107,9 +108,32 @@ public class CarPool {
                     JSONObject singleBookingData = (JSONObject) singleBooking;
                     String startTime = singleBookingData.get("StartTime").toString();
                     String endTime = singleBookingData.get("EndTime").toString();
-                    singleCar.bookCar(new Date(Integer.parseInt(startTime)), new Date(Integer.parseInt(endTime)));
+                    singleCar.bookCar(new Date(Long.parseLong(startTime)), new Date(Long.parseLong(endTime)));
                 }
                 this.carList.add(singleCar);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object carRequestDataContent = requestsData.get("Requests");
+            JSONArray requests = (JSONArray) carRequestDataContent;
+            for (int i = 0; i < requests.size(); i++) {
+                Object singleCarRequestData = requests.get(i);
+                JSONObject requestInfo = (JSONObject) singleCarRequestData;
+                CarRequest singleCarRequest = new CarRequest(Integer.parseInt(requestInfo.get("BookingId").toString()),
+                        Integer.parseInt(requestInfo.get("CarId").toString()),
+                        new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
+                        new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
+                );
+                this.requestList.add(singleCarRequest);
             }
         } catch (FileNotFoundException e) {
             e.printStackTrace();
@@ -141,13 +165,13 @@ public class CarPool {
             Object jsonContent = jParser.parse(reader);
             JSONObject requestsData = (JSONObject) jsonContent;
             Object carRequestDataContent = requestsData.get("CarRequests");
-            JSONArray requests = (JSONArray) carRequestDataContent;
-            JSONObject request = new JSONObject();
-            request.put("BookingId", bookingId);
-            request.put("CarId", carId);
-            request.put("StartTime", startTime.getTime());
-            request.put("EndTime", endTime.getTime());
-            requests.add(request);
+            JSONArray carRequests = (JSONArray) carRequestDataContent;
+            JSONObject carRequest = new JSONObject();
+            carRequest.put("BookingId", bookingId);
+            carRequest.put("CarId", carId);
+            carRequest.put("StartTime", startTime.getTime());
+            carRequest.put("EndTime", endTime.getTime());
+            carRequests.add(carRequest);
             try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
                 file.write(requestsData.toJSONString());
                 file.flush();
@@ -176,12 +200,12 @@ public class CarPool {
             Object jsonContent = jParser.parse(reader);
             JSONObject requestsData = (JSONObject) jsonContent;
             Object carRequestDataContent = requestsData.get("CarRequests");
-            JSONArray requests = (JSONArray) carRequestDataContent;
-            for(int i = 0; i < requests.size(); i++) {
-                Object requestData = requests.get(i);
+            JSONArray carRequests = (JSONArray) carRequestDataContent;
+            for(int i = 0; i < carRequests.size(); i++) {
+                Object requestData = carRequests.get(i);
                 JSONObject singleRequest = (JSONObject) requestData;
-                if(singleRequest.get("BookingId").toString().equals(bookingId)) {
-                    requests.remove(i);
+                if(Integer.parseInt(singleRequest.get("BookingId").toString()) == bookingId) {
+                    carRequests.remove(i);
                     break;
                 }
             }
@@ -198,5 +222,9 @@ public class CarPool {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+    }
+
+    public ArrayList<CarRequest> getRequests() {
+        return this.requestList;
     }
 }

@@ -120,7 +120,9 @@ public class CarBroker implements Runnable {
 					if(statusMessage.equals("InitialMessageRequest")) {
 						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "InitialMessageResponseCarBroker");
 					}
-					break;	
+					break;
+				case INQUIRE:
+					break;
 				default:
 					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), null, "ERROR ID_FormatException");
 					break;
@@ -145,6 +147,11 @@ public class CarBroker implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+		try {
+			socket = new DatagramSocket(carBrokerPort);
+		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 	}

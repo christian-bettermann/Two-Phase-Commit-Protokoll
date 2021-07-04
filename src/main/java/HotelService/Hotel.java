@@ -1,5 +1,6 @@
 package HotelService;
 
+import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -29,7 +30,7 @@ public class Hotel {
     public boolean checkRoomOfId(int bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.requestList.add(new RoomRequest(bookingId, roomId, startTime, endTime));
+            this.addRequestToList(bookingId, roomId, startTime, endTime);
         }
         return result;
     }
@@ -64,11 +65,13 @@ public class Hotel {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        this.removeRequestFromList(bookingID);
     }
 
     public void roolbackRequestOfBookingID(int bookingID) {
         RoomRequest request = getRequest(bookingID);
         roomList.get(request.getRoomId()).removeBooking(request.getStartTime(), request.getEndTime());
+        this.removeRequestFromList(bookingID);
     }
 
     private RoomRequest getRequest(int bookingId) {
@@ -130,5 +133,76 @@ public class Hotel {
             }
         }
         return result;
+    }
+
+    public void addRequestToList(int bookingId, int carId, Date startTime, Date endTime) {
+        this.requestList.add(new RoomRequest(bookingId, carId, startTime, endTime));
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object carRequestDataContent = requestsData.get("RoomRequests");
+            JSONArray roomRequests = (JSONArray) carRequestDataContent;
+            JSONObject roomRequest = new JSONObject();
+            roomRequest.put("BookingId", bookingId);
+            roomRequest.put("RoomId", carId);
+            roomRequest.put("StartTime", startTime.getTime());
+            roomRequest.put("EndTime", endTime.getTime());
+            roomRequests.add(roomRequest);
+            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+                file.write(requestsData.toJSONString());
+                file.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void removeRequestFromList(int bookingId) {
+        for(int i = 0; i < requestList.size(); i++) {
+            if(this.requestList.get(i).getId() == bookingId) {
+                this.requestList.remove(i);
+                break;
+            }
+        }
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object carRequestDataContent = requestsData.get("RoomRequests");
+            JSONArray roomRequests = (JSONArray) carRequestDataContent;
+            for(int i = 0; i < roomRequests.size(); i++) {
+                Object requestData = roomRequests.get(i);
+                JSONObject singleRequest = (JSONObject) requestData;
+                if(Integer.parseInt(singleRequest.get("BookingId").toString()) == bookingId) {
+                    roomRequests.remove(i);
+                    break;
+                }
+            }
+            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+                file.write(requestsData.toJSONString());
+                file.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public ArrayList<RoomRequest> getRequests() {
+        return this.requestList;
     }
 }
