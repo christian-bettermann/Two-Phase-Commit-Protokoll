@@ -7,14 +7,16 @@ import java.util.Date;
 
 public class Car {
     //Attribute
+	private final int id;
     private final String manufacturer;
     private final String model;
     private final int horsePower;
     private final CarTypes type;
     private ArrayList<BlockedTimeZone> reservationList;
 
-    public Car(String pManufacturer, String pModel, int pHP, CarTypes pType) {
-        this.manufacturer = pManufacturer;
+    public Car(int pid, String pManufacturer, String pModel, int pHP, CarTypes pType) {
+        this.id = pid;
+    	this.manufacturer = pManufacturer;
         this.model = pModel;
         this.horsePower = pHP;
         this.type = pType;
@@ -63,6 +65,10 @@ public class Car {
         }
     }
 
+    public int getId() {
+        return id;
+    }
+    
     public String getManufacturer() {
         return manufacturer;
     }
@@ -80,6 +86,6 @@ public class Car {
     }
 
     public String getInfo() {
-        return this.manufacturer + "_" + this.model + "_" + this.horsePower + "_" + this.type;
+        return this.id + "_" + this.manufacturer + "_" + this.model + "_" + this.horsePower + "_" + this.type;
     }
 }

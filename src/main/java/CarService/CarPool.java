@@ -26,7 +26,7 @@ public class CarPool {
         this.requestList = new ArrayList<CarRequest>();
     }
 
-    public boolean checkCarOfId(int bookingId, int carId, Date startTime, Date endTime) {
+    public boolean checkCarOfId(String bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(bookingId, carId, startTime, endTime);
@@ -76,7 +76,7 @@ public class CarPool {
     private CarRequest getRequest(int bookingId) {
         CarRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getId() == bookingId) {
+            if(this.requestList.get(i).getId().toString().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -96,7 +96,7 @@ public class CarPool {
             for (int i = 0; i < carJsonArray.size(); i++) {
                 Object singleCarData = carJsonArray.get(i);
                 JSONObject carInfo = (JSONObject) singleCarData;
-                Car singleCar = new Car(carInfo.get("Manufacturer").toString(),
+                Car singleCar = new Car(Integer.parseInt(carInfo.get("Id").toString()),carInfo.get("Manufacturer").toString(),
                         carInfo.get("Model").toString(),
                         Integer.parseInt(carInfo.get("HorsePower").toString()),
                         CarTypes.valueOf(carInfo.get("Type").toString())
@@ -123,12 +123,12 @@ public class CarPool {
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject requestsData = (JSONObject) jsonContent;
-            Object carRequestDataContent = requestsData.get("Requests");
+            Object carRequestDataContent = requestsData.get("CarRequests");
             JSONArray requests = (JSONArray) carRequestDataContent;
             for (int i = 0; i < requests.size(); i++) {
                 Object singleCarRequestData = requests.get(i);
                 JSONObject requestInfo = (JSONObject) singleCarRequestData;
-                CarRequest singleCarRequest = new CarRequest(Integer.parseInt(requestInfo.get("BookingId").toString()),
+                CarRequest singleCarRequest = new CarRequest(requestInfo.get("BookingId").toString(),
                         Integer.parseInt(requestInfo.get("CarId").toString()),
                         new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
                         new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
@@ -157,7 +157,7 @@ public class CarPool {
         return result;
     }
 
-    public void addRequestToList(int bookingId, int carId, Date startTime, Date endTime) {
+    public void addRequestToList(String bookingId, int carId, Date startTime, Date endTime) {
         this.requestList.add(new CarRequest(bookingId, carId, startTime, endTime));
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
@@ -189,7 +189,7 @@ public class CarPool {
 
     public void removeRequestFromList(int bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getId() == bookingId) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 this.requestList.remove(i);
                 break;
             }

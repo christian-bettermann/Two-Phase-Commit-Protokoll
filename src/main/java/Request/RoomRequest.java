@@ -6,7 +6,7 @@ public class RoomRequest extends Request{
     //Attribute
     private int roomId;
 
-    public RoomRequest(int pBookingId, int pRoomId, Date pStartTime, Date pEndTime) {
+    public RoomRequest(String pBookingId, int pRoomId, Date pStartTime, Date pEndTime) {
         this.id = pBookingId;
         this.roomId = pRoomId;
         this.startTime = pStartTime;

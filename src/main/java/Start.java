@@ -11,7 +11,7 @@ public class Start {
 	static InetAddress carBrokerAddress;
 	static InetAddress hotelBrokerAddress;
 	private static final Logger logger = LogManager.getRootLogger();
-	public int firstServerPort, secondServerPort, carBrokerPort, hotelBrokerPort;
+	
 	public static void main(String[] args) {
 		//init logger
 		Configurator.setRootLevel(Level.TRACE);

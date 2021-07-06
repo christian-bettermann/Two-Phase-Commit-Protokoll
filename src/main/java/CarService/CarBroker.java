@@ -80,11 +80,14 @@ public class CarBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all cars
-					//#####################################
-					response = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), msg.getBookingID(), pool.getInfoOfCars());;
+					Message res = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), "0", pool.getInfoOfCars());
+					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
+					socket.send(packetCar);
+					response = null;
 					break;
 				case PREPARE:
-					if(this.pool.checkCarOfId(Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.pool.checkCarOfId(msg.getBookingID(),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 						//write to stable store
 						//############################
@@ -147,11 +150,6 @@ public class CarBroker implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		} catch (ParseException e) {
-			e.printStackTrace();
-		}
-		try {
-			socket = new DatagramSocket(carBrokerPort);
-		} catch (SocketException e) {
 			e.printStackTrace();
 		}
 	}

@@ -4,12 +4,12 @@ import java.util.Date;
 
 public abstract class Request {
     //Attribute
-    protected int id;
+    protected String id;
     protected Date startTime;
     protected Date endTime;
 
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 

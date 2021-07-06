@@ -7,14 +7,14 @@ import java.util.Date;
 
 public class Room {
     //Attribute
-    private final String id;
+    private final int id;
     private final int numberOfBeds;
     private final BedTypes bedType;
     private final int numberOfBaths;
     private final RoomTypes roomType;
     private ArrayList<BlockedTimeZone> reservationList;
 
-    public Room(String pId, int pNumberOfBeds, BedTypes pBedType, int pNumberOfBaths, RoomTypes pRoomType) {
+    public Room(int pId, int pNumberOfBeds, BedTypes pBedType, int pNumberOfBaths, RoomTypes pRoomType) {
         this.id = pId;
         this.numberOfBeds = pNumberOfBeds;
         this.bedType = pBedType;
@@ -65,7 +65,7 @@ public class Room {
         }
     }
 
-    public String getId() {
+    public int getId() {
         return id;
     }
 
@@ -86,6 +86,6 @@ public class Room {
     }
 
     public String getInfo() {
-        return this.numberOfBeds + "_" + this.bedType + "_" + this.numberOfBaths + "_" + this.roomType;
+        return this.id + "_" + this.numberOfBeds + "_" + this.bedType + "_" + this.numberOfBaths + "_" + this.roomType;
     }
 }

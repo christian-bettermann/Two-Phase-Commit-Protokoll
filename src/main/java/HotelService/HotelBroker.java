@@ -83,11 +83,14 @@ public class HotelBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
-					//########################################
-					response = new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), msg.getBookingID(), hotel.getInfoOfRooms());
+					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), "0", hotel.getInfoOfRooms());
+					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
+					socket.send(packetHotel);
+					response = null;
 					break;
 				case PREPARE:
-					if(this.hotel.checkRoomOfId(Integer.parseInt(msg.getBookingID()), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.hotel.checkRoomOfId(msg.getBookingID(), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 						//write to stable store
 						//#################################
@@ -100,7 +103,7 @@ public class HotelBroker implements Runnable {
 				case COMMIT:
 					//proceed with booking of room
 					//write to stable store
-					this.hotel.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
@@ -108,7 +111,7 @@ public class HotelBroker implements Runnable {
 					//cancel booking of room
 					//write to stable store
 					//#################################
-					this.hotel.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 					break;
