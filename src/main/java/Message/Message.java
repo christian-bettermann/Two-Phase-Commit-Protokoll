@@ -64,7 +64,7 @@ public class Message {
 			logger.error("Message building failed for message: <" + msg + ">");
 		}
 	}
-	
+
 	public String toString() {
 		if(senderAddress.toString().charAt(0) == '/') {
 			return status + " " + senderAddress.toString().trim().split("/")[1] + " " + senderPort + " " + bookingID + " " + statusMessage;

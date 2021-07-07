@@ -1,5 +1,6 @@
 package HotelService;
 
+import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -10,6 +11,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -26,10 +28,10 @@ public class Hotel {
     }
 
 
-    public boolean checkRoomOfId(int bookingId, int roomId, Date startTime, Date endTime) {
+    public boolean checkRoomOfId(InetAddress target, int port, int bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.addRequestToList(bookingId, roomId, startTime, endTime);
+            this.addRequestToList(target, port, bookingId, roomId, startTime, endTime);
         }
         return result;
     }
@@ -119,6 +121,31 @@ public class Hotel {
         } catch (ParseException e) {
             e.printStackTrace();
         }
+        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        {
+            Object jsonContent = jParser.parse(reader);
+            JSONObject requestsData = (JSONObject) jsonContent;
+            Object roomRequestDataContent = requestsData.get("Requests");
+            JSONArray requests = (JSONArray) roomRequestDataContent;
+            for (int i = 0; i < requests.size(); i++) {
+                Object singleRoomRequestData = requests.get(i);
+                JSONObject requestInfo = (JSONObject) singleRoomRequestData;
+                RoomRequest singleRoomRequest = new RoomRequest(InetAddress.getByName(requestInfo.get("Target_IP").toString()),
+                        Integer.parseInt(requestInfo.get("Target_Port").toString()),
+                        Integer.parseInt(requestInfo.get("BookingId").toString()),
+                        Integer.parseInt(requestInfo.get("RoomId").toString()),
+                        new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
+                        new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
+                );
+                this.requestList.add(singleRoomRequest);
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
     }
 
     public String getInfoOfRooms() {
@@ -134,8 +161,8 @@ public class Hotel {
         return result;
     }
 
-    public void addRequestToList(int bookingId, int carId, Date startTime, Date endTime) {
-        this.requestList.add(new RoomRequest(bookingId, carId, startTime, endTime));
+    public void addRequestToList(InetAddress target, int port, int bookingId, int carId, Date startTime, Date endTime) {
+        this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime));
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
         {
@@ -144,6 +171,8 @@ public class Hotel {
             Object carRequestDataContent = requestsData.get("RoomRequests");
             JSONArray roomRequests = (JSONArray) carRequestDataContent;
             JSONObject roomRequest = new JSONObject();
+            roomRequest.put("Target_IP", target.toString());
+            roomRequest.put("Target_Port", port);
             roomRequest.put("BookingId", bookingId);
             roomRequest.put("RoomId", carId);
             roomRequest.put("StartTime", startTime.getTime());

@@ -128,7 +128,7 @@ public class CarPool {
             for (int i = 0; i < requests.size(); i++) {
                 Object singleCarRequestData = requests.get(i);
                 JSONObject requestInfo = (JSONObject) singleCarRequestData;
-                CarRequest singleCarRequest = new CarRequest( InetAddress.getByName(requestInfo.get("Target_IP").toString()),
+                CarRequest singleCarRequest = new CarRequest(InetAddress.getByName(requestInfo.get("Target_IP").toString()),
                         Integer.parseInt(requestInfo.get("Target_Port").toString()),
                         Integer.parseInt(requestInfo.get("BookingId").toString()),
                         Integer.parseInt(requestInfo.get("CarId").toString()),

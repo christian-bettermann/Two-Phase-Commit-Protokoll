@@ -7,9 +7,12 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Date;
 
 import Message.*;
+import Request.CarRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONObject;
@@ -36,12 +39,6 @@ public class CarBroker implements Runnable {
     }
     
     public void run() {
-    	logger.info("Starting CarBroker on port <" + carBrokerPort + "> ...");
-    	try {
-			socket = new DatagramSocket(carBrokerPort);
-		} catch (SocketException e) {
-			e.printStackTrace();
-		}
         online = true;
         
         while (online) {
@@ -85,11 +82,11 @@ public class CarBroker implements Runnable {
 					break;
 				case PREPARE:
 					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 						//write to stable store
 						//############################
 					} else {
-						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 						//write to stable store
 						//############################
 					}
@@ -99,7 +96,7 @@ public class CarBroker implements Runnable {
 					//write to stable store
 					this.pool.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 					break;
 				case ROLLBACK:
 					//cancel booking of car
@@ -107,7 +104,7 @@ public class CarBroker implements Runnable {
 					//############################
 					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
@@ -118,7 +115,7 @@ public class CarBroker implements Runnable {
 					break;
 				case CONNECTIONTEST:
 					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "InitialMessageResponseCarBroker");
+						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "HiFromCarBroker");
 					}
 					break;
 				case INQUIRE:
@@ -149,10 +146,27 @@ public class CarBroker implements Runnable {
 		} catch (ParseException e) {
 			e.printStackTrace();
 		}
+		logger.info("Starting CarBroker on port <" + carBrokerPort + "> ...");
 		try {
 			socket = new DatagramSocket(carBrokerPort);
 		} catch (SocketException e) {
 			e.printStackTrace();
+		}
+		ArrayList<CarRequest> oldRequests = pool.getRequests();
+		DatagramPacket packet;
+		byte[] dataBytes;
+		if(oldRequests.size() > 0) {
+			for(int i = 0; i < oldRequests.size(); i++) {
+				CarRequest singleOldRequest = oldRequests.get(i);
+				Message msg = new Message(StatusTypes.READY, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort(), singleOldRequest.getIdAsString(), "");
+				dataBytes = msg.toString().getBytes();
+				packet = new DatagramPacket(dataBytes, dataBytes.length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
+				try {
+					this.socket.send(packet);
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+			}
 		}
 	}
 	
