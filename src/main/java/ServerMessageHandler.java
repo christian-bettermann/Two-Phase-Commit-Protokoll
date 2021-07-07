@@ -1,28 +1,44 @@
+import java.io.FileNotFoundException;
+import java.io.FileReader;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.lang.reflect.Array;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import Message.*;
+import Request.CarRequest;
+import Request.ServerRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONArray;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class ServerMessageHandler implements Runnable{
+	//Attribute
+	private int id;
 	private static final Logger logger = LogManager.getRootLogger();
 	private DatagramSocket socket;
 	private BlockingQueue<Message> incomingMessages;
 	private String name;
 	private Boolean online;
 	private Server server;
+	private ArrayList<ServerRequest> requestList;
 	
 	
-	public ServerMessageHandler(String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
+	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
+		this.id = id;
 		this.incomingMessages = incomingMessages;
 		this.name = name;
 		this.socket = socket;
 		this.server = server;
+		this.requestList = new ArrayList<ServerRequest>();
 	}
 	
 	public void run() {
@@ -67,7 +83,7 @@ public class ServerMessageHandler implements Runnable{
 					DatagramPacket packetHotel = new DatagramPacket(infoMsgHotel.toString().getBytes(), infoMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 					logger.trace("<" + name + "> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
-					
+
 					response = null;
 					break;
 				case BOOKING:
@@ -185,5 +201,48 @@ public class ServerMessageHandler implements Runnable{
 			e.printStackTrace();
 		}
 		return response;
+	}
+
+	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime) {
+		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime));
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		{
+			Object jsonContent = jParser.parse(reader);
+			JSONObject requestsData = (JSONObject) jsonContent;
+			Object serverRequestDataContent = requestsData.get("ServerRequests");
+			JSONArray serverRequests = (JSONArray) serverRequestDataContent;
+			JSONObject serverRequest = new JSONObject();
+			serverRequest.put("BookingId", bookingId);
+			serverRequest.put("CarId", carId);
+			serverRequest.put("RoomId", roomId);
+			serverRequest.put("StartTime", startTime.getTime());
+			serverRequest.put("EndTime", endTime.getTime());
+			serverRequest.put("State", "Initialized");
+			serverRequests.add(serverRequest);
+			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+				file.write(requestsData.toJSONString());
+				file.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private ServerRequest getRequest(int bookingId) {
+		ServerRequest request = null;
+		for(int i = 0; i < requestList.size(); i++) {
+			if(this.requestList.get(i).getIdAsString().equals("" + bookingId + "")) {
+				request = this.requestList.get(i);
+				break;
+			}
+		}
+		return request;
 	}
 }

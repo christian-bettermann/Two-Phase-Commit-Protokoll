@@ -123,7 +123,7 @@ public class Server implements Runnable {
 	}
 	
 	public void startMessageHandling() {
-		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(serverName+"MessageHandler", incomingMessages, socket, this);
+		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
 		Thread incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
 		

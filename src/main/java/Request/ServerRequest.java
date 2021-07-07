@@ -1,5 +1,7 @@
 package Request;
 
+import Message.StatusTypes;
+
 import java.util.Date;
 
 public class ServerRequest extends Request{

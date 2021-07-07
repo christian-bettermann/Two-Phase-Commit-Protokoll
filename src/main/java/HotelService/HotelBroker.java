@@ -40,7 +40,6 @@ public class HotelBroker implements Runnable {
     
     public void run() {
         online = true;
-
         while (online) {
         	try {
         		buffer = new byte[1024];

@@ -31,8 +31,8 @@ public class Hotel {
         return result;
     }
 
-    public void commitRequestOfBookingID(String bookingID) {
-        RoomRequest request = getRequest(bookingID);
+    public void commitRequestOfBookingID(String bookingId) {
+        RoomRequest request = getRequest(bookingId);
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
         {
@@ -45,6 +45,7 @@ public class Hotel {
             Object reservationsObject = singleRoom.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
             JSONObject reservation = new JSONObject();
+            reservation.put("Id", request.getId());
             reservation.put("StartTime", request.getStartTime().toString());
             reservation.put("EndTime", request.getEndTime().toString());
             reservations.add(reservation);
@@ -61,13 +62,13 @@ public class Hotel {
         } catch (ParseException e) {
             e.printStackTrace();
         }
-        this.removeRequestFromList(bookingID);
+        this.removeRequestFromList(bookingId);
     }
 
-    public void roolbackRequestOfBookingID(String bookingID) {
-        RoomRequest request = getRequest(bookingID);
+    public void roolbackRequestOfBookingID(String bookingId) {
+        RoomRequest request = getRequest(bookingId);
         roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
-        this.removeRequestFromList(bookingID);
+        this.removeRequestFromList(bookingId);
     }
 
     private RoomRequest getRequest(String bookingId) {

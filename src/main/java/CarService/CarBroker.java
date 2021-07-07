@@ -39,7 +39,6 @@ public class CarBroker implements Runnable {
     
     public void run() {
         online = true;
-        
         while (online) {
         	try {
         		buffer = new byte[1024];
@@ -96,7 +95,7 @@ public class CarBroker implements Runnable {
 				case COMMIT:
 					//proceed with booking of car
 					//write to stable store
-					this.pool.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.pool.commitRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenBooked");
 					break;
@@ -104,7 +103,7 @@ public class CarBroker implements Runnable {
 					//cancel booking of car
 					//write to stable store
 					//############################
-					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
 					break;

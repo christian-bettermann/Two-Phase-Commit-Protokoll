@@ -31,7 +31,7 @@ public class CarPool {
         return result;
     }
 
-    public void commitRequestOfBookingID(int bookingID) {
+    public void commitRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
@@ -45,6 +45,7 @@ public class CarPool {
             Object reservationsObject = singleCar.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
             JSONObject reservation = new JSONObject();
+            reservation.put("Id", request.getId());
             reservation.put("StartTime", request.getStartTime().toString());
             reservation.put("EndTime", request.getEndTime().toString());
             reservations.add(reservation);
@@ -64,13 +65,13 @@ public class CarPool {
         removeRequestFromList(bookingID);
     }
 
-    public void roolbackRequestOfBookingID(int bookingID) {
+    public void roolbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
         removeRequestFromList(bookingID);
     }
 
-    private CarRequest getRequest(int bookingId) {
+    private CarRequest getRequest(String bookingId) {
         CarRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
@@ -195,9 +196,9 @@ public class CarPool {
         }
     }
 
-    public void removeRequestFromList(int bookingId) {
+    public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals("" + bookingId + "")) {
+            if(this.requestList.get(i).getId().equals( bookingId)) {
                 this.requestList.remove(i);
                 break;
             }
@@ -212,7 +213,7 @@ public class CarPool {
             for(int i = 0; i < carRequests.size(); i++) {
                 Object requestData = carRequests.get(i);
                 JSONObject singleRequest = (JSONObject) requestData;
-                if(Integer.parseInt(singleRequest.get("BookingId").toString()) == bookingId) {
+                if(singleRequest.get("BookingId").toString().equals(bookingId)) {
                     carRequests.remove(i);
                     break;
                 }
