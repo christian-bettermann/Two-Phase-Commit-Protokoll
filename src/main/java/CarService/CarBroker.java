@@ -84,7 +84,7 @@ public class CarBroker implements Runnable {
 					response = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), msg.getBookingID(), pool.getInfoOfCars());;
 					break;
 				case PREPARE:
-					if(this.pool.checkCarOfId(Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), msg.getStatusMessage());
 						//write to stable store
 						//############################

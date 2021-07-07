@@ -10,7 +10,7 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
+import java.net.InetAddress;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -26,10 +26,10 @@ public class CarPool {
         this.requestList = new ArrayList<CarRequest>();
     }
 
-    public boolean checkCarOfId(int bookingId, int carId, Date startTime, Date endTime) {
+    public boolean checkCarOfId(InetAddress target, int port, int bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
         if(result) {
-            this.addRequestToList(bookingId, carId, startTime, endTime);
+            this.addRequestToList(target, port, bookingId, carId, startTime, endTime);
         }
         return result;
     }
@@ -128,7 +128,9 @@ public class CarPool {
             for (int i = 0; i < requests.size(); i++) {
                 Object singleCarRequestData = requests.get(i);
                 JSONObject requestInfo = (JSONObject) singleCarRequestData;
-                CarRequest singleCarRequest = new CarRequest(Integer.parseInt(requestInfo.get("BookingId").toString()),
+                CarRequest singleCarRequest = new CarRequest( InetAddress.getByName(requestInfo.get("Target_IP").toString()),
+                        Integer.parseInt(requestInfo.get("Target_Port").toString()),
+                        Integer.parseInt(requestInfo.get("BookingId").toString()),
                         Integer.parseInt(requestInfo.get("CarId").toString()),
                         new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
                         new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
@@ -157,8 +159,8 @@ public class CarPool {
         return result;
     }
 
-    public void addRequestToList(int bookingId, int carId, Date startTime, Date endTime) {
-        this.requestList.add(new CarRequest(bookingId, carId, startTime, endTime));
+    public void addRequestToList(InetAddress target, int port, int bookingId, int carId, Date startTime, Date endTime) {
+        this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime));
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
         {
@@ -167,6 +169,8 @@ public class CarPool {
             Object carRequestDataContent = requestsData.get("CarRequests");
             JSONArray carRequests = (JSONArray) carRequestDataContent;
             JSONObject carRequest = new JSONObject();
+            carRequest.put("Target_IP", target.toString());
+            carRequest.put("Target_Port", port);
             carRequest.put("BookingId", bookingId);
             carRequest.put("CarId", carId);
             carRequest.put("StartTime", startTime.getTime());

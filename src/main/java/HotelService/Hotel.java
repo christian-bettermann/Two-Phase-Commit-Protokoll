@@ -1,6 +1,5 @@
 package HotelService;
 
-import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;

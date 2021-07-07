@@ -1,22 +1,25 @@
 package Request;
 
-import java.net.InetAddress;
 import java.util.Date;
 
-public class CarRequest extends Request{
+public class ServerRequest extends Request{
     //Attribute
     private int carId;
+    private int roomId;
 
-    public CarRequest(InetAddress pTargetIp, int pTargetPort, int pBookingId, int pCarId, Date pStartTime, Date pEndTime) {
-        this.targetIp = pTargetIp;
-        this.targetPort = pTargetPort;
+    public ServerRequest(int pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime) {
         this.id = pBookingId;
         this.carId = pCarId;
+        this.roomId = pRoomId;
         this.startTime = pStartTime;
         this.endTime = pEndTime;
     }
 
     public int getCarId() {
         return this.carId;
+    }
+
+    public int getRoomId() {
+        return this.roomId;
     }
 }
