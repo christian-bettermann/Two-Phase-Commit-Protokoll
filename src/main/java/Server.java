@@ -45,7 +45,7 @@ public class Server implements Runnable {
 		int carBrokerPort;
 		int hotelBrokerPort;
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("src/main/resources/CarService/config_Server_" + id + ".json"))
+		try (FileReader reader = new FileReader("src/main/resources/Server/config_Server_" + id + ".json"))
 		{
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;

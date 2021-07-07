@@ -29,14 +29,13 @@ public class HotelBroker implements Runnable {
     private Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
-    
     int hotelBrokerPort;
     
     public HotelBroker() {
-    	this.initialize();
     	logger.trace("Creating HotelBroker...");
-    	this.hotel = new Hotel(brokerName);
+    	this.hotel = new Hotel();
 		this.hotel.initialize();
+		this.initialize();
     }
     
     public void run() {
@@ -49,7 +48,7 @@ public class HotelBroker implements Runnable {
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
 	            logger.info("HotelBroker received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
@@ -78,7 +77,7 @@ public class HotelBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
-					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), "0", hotel.getInfoOfRooms());
+					Message res= new Message(StatusTypes.INFOROOMS, this.localAddress, this.hotelBrokerPort, "0", hotel.getInfoOfRooms());
 					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
 					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
@@ -86,12 +85,12 @@ public class HotelBroker implements Runnable {
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
+						response = new Message(StatusTypes.READY, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
 
 						//write to stable store
 						//#################################
 					} else {
-						response = new Message(StatusTypes.ABORT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
+						response = new Message(StatusTypes.ABORT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
 						//write to stable store
 						//#################################
 					}
@@ -101,7 +100,7 @@ public class HotelBroker implements Runnable {
 					//write to stable store
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
 					break;
 				case ROLLBACK:
 					//cancel booking of room
@@ -109,22 +108,22 @@ public class HotelBroker implements Runnable {
 					//#################################
 					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(StatusTypes.TESTING, localAddress, socket.getLocalPort(), "0", "OK");
+						response = new Message(StatusTypes.TESTING, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "OK");
 					}
 					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:
 					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(StatusTypes.CONNECTIONTEST, localAddress, socket.getLocalPort(), "0", "HiFromHotel");
+						response = new Message(StatusTypes.CONNECTIONTEST, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HiFromHotel");
 					}
 					break;	
 				default:
-					response = new Message(StatusTypes.ERROR, localAddress, socket.getLocalPort(), null, "ERROR ID_FormatException");
+					response = new Message(StatusTypes.ERROR, this.localAddress, this.hotelBrokerPort, null, "ERROR ID_FormatException");
 					break;
 			}
 		} catch (Exception e) {

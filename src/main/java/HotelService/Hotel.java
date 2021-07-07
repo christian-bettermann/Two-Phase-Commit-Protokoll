@@ -17,12 +17,10 @@ import java.util.Date;
 
 public class Hotel {
     //Attribute
-    private String hotelName;
     private ArrayList<Room> roomList;
     private ArrayList<RoomRequest> requestList;
 
-    public Hotel(String pName) {
-        this.hotelName = pName;
+    public Hotel() {
         this.roomList = new ArrayList<Room>();
         this.requestList = new ArrayList<RoomRequest>();
     }
@@ -124,7 +122,7 @@ public class Hotel {
         {
             Object jsonContent = jParser.parse(reader);
             JSONObject requestsData = (JSONObject) jsonContent;
-            Object roomRequestDataContent = requestsData.get("Requests");
+            Object roomRequestDataContent = requestsData.get("RoomRequests");
             JSONArray requests = (JSONArray) roomRequestDataContent;
             for (int i = 0; i < requests.size(); i++) {
                 Object singleRoomRequestData = requests.get(i);

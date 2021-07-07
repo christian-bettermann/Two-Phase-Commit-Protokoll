@@ -17,7 +17,7 @@ public class Message {
 	public Message(StatusTypes status, String senderAddress, int senderPort, String bookingID, String statusMessage) {
 		this.status = status;
 		try {
-			this.senderAddress = InetAddress.getByName(senderAddress.toString().split("/")[1]);	//
+			this.senderAddress = InetAddress.getByName(senderAddress.split("/")[1]);	//
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
@@ -33,11 +33,40 @@ public class Message {
 		this.bookingID = bookingID; 
 		this.statusMessage = statusMessage.replace(" ", "_");
 	}
-	
+
 	public Message() {
-		
+
 	}
-	
+
+	public Message(String msg, InetAddress pSenderAddress, int pSenderPort) {
+		this.senderAddress = pSenderAddress;
+		this.senderPort = pSenderPort;
+		String[] msgArray = msg.split(" ");
+		if(msgArray.length == 5) {
+			try {
+				status = StatusTypes.valueOf(msgArray[0].trim());
+				if(msgArray[1].trim().split("/").length > 1) {
+					senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);
+				} else {
+					senderAddress = InetAddress.getByName(msgArray[1].trim());
+				}
+				senderPort = Integer.parseInt(msgArray[2].trim());
+				bookingID = msgArray[3].trim();
+				statusMessage = msgArray[4].trim();
+			} catch(Exception e) {
+				e.printStackTrace();
+				status = StatusTypes.ERROR;
+				senderAddress = null;
+				senderPort = -1;
+				bookingID = null;
+				statusMessage = null;
+			}
+			logger.trace("Built Message Object(status:<" + status + ">, senderAddress:<" + senderAddress + ">, senderPort:<" + senderPort + ">, bookingID:<" + bookingID + ">, statusMessage:<" + statusMessage + ">");
+		} else {
+			logger.error("Message building failed for message: <" + msg + ">");
+		}
+	}
+
 	public Message(String msg) {
 		String[] msgArray = msg.split(" ");
 		if(msgArray.length == 5) {

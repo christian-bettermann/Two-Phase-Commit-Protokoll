@@ -16,15 +16,14 @@ import java.util.Date;
 
 public class CarPool {
     //Attribute
-    private String poolName;
     private ArrayList<Car> carList;
     private ArrayList<CarRequest> requestList;
 
-    public CarPool(String pName) {
-        this.poolName = pName;
-        this.carList = new ArrayList<>();
+    public CarPool() {
+        this.carList = new ArrayList<Car>();
         this.requestList = new ArrayList<CarRequest>();
     }
+
     public boolean checkCarOfId(InetAddress target, int port, int bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
         if(result) {
