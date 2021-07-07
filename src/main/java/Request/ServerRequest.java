@@ -8,6 +8,7 @@ public class ServerRequest extends Request{
     //Attribute
     private int carId;
     private int roomId;
+    private int messageCounter;
     private StatusTypes stateOfCarBroker;
     private StatusTypes stateOfHotelBroker;
 
@@ -15,6 +16,7 @@ public class ServerRequest extends Request{
         this.id = pBookingId;
         this.carId = pCarId;
         this.roomId = pRoomId;
+        this.messageCounter = 0;
         this.startTime = pStartTime;
         this.endTime = pEndTime;
         this.stateOfCarBroker = StatusTypes.INITIALIZED;
@@ -31,10 +33,12 @@ public class ServerRequest extends Request{
 
     public void setHotelBrokerState(StatusTypes pState) {
         this.stateOfHotelBroker = pState;
+        this.messageCounter++;
     }
 
     public void setCarBrokerState(StatusTypes pState) {
         this.stateOfCarBroker = pState;
+        this.messageCounter++;
     }
 
     public StatusTypes getHotelBrokerState() {
@@ -45,8 +49,24 @@ public class ServerRequest extends Request{
         return this.stateOfCarBroker;
     }
 
+    public int getMessageCounter() {
+        return this.messageCounter;
+    }
+
+    public void resetMessageCounter() {
+        this.messageCounter = 0;
+    }
+
     public boolean bothReady() {
-        if(this.stateOfCarBroker.equals(this.stateOfHotelBroker)) {
+        if(this.stateOfCarBroker.equals(StatusTypes.READY) && this.stateOfHotelBroker.equals(StatusTypes.READY)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean bothAcknowledged() {
+        if(this.stateOfCarBroker.equals(StatusTypes.ACKNOWLEDGMENT) && this.stateOfHotelBroker.equals(StatusTypes.ACKNOWLEDGMENT)) {
             return true;
         } else {
             return false;
