@@ -4,6 +4,7 @@ public enum StatusTypes {
 	INFO,
 	INFOCARS,
 	INFOROOMS,
+	INITIALIZED,
 	BOOKING,
 	PREPARE,
 	READY,
@@ -14,5 +15,6 @@ public enum StatusTypes {
 	TESTING,
 	ERROR,
 	CONNECTIONTEST,
-	INQUIRE
+	INQUIRE,
+	THROWAWAY
 }

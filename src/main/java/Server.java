@@ -32,6 +32,7 @@ public class Server implements Runnable {
     Broker[] broker = new Broker[2];
     
 	public Server (int id) {
+		this.id = id;
 		logger.trace("Creating Server <" + serverName + ">...");
 		try {
 			localAddress = InetAddress.getLocalHost();

@@ -46,8 +46,8 @@ public class Hotel {
             JSONArray reservations = (JSONArray) reservationsObject;
             JSONObject reservation = new JSONObject();
             reservation.put("Id", request.getId());
-            reservation.put("StartTime", request.getStartTime().toString());
-            reservation.put("EndTime", request.getEndTime().toString());
+            reservation.put("StartTime", request.getStartTime().getTime());
+            reservation.put("EndTime", request.getEndTime().getTime());
             reservations.add(reservation);
             try (FileWriter file = new FileWriter("src/main/resources/HotelService/data.json")) {
                 file.write(roomData.toJSONString());

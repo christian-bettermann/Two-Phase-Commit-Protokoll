@@ -57,12 +57,10 @@ public class ServerMessageHandler implements Runnable{
 					socket.send(packet);
 				}
 				
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			} catch (IOException e) {
+			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
-        }
+		}
         socket.close();
 	}
 	
@@ -109,6 +107,7 @@ public class ServerMessageHandler implements Runnable{
 						DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 						logger.trace("<" + name + "> sent: <"+ new String(preparePacketHotel.getData(), 0, preparePacketHotel.getLength()) +">");
 						socket.send(preparePacketHotel);
+						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageHotelId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()));
 					} else {
 						response = new Message(StatusTypes.ERROR, InetAddress.getLocalHost(), socket.getLocalPort(), null, "ERROR_Invalid_Booking");
 					}
@@ -116,12 +115,16 @@ public class ServerMessageHandler implements Runnable{
 				case READY:
 					//test for carBroker
 					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
-						//stable store carBroker ready for BookingID
-						//##############################################
 						logger.error("CARBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
-						//check if stable store already has the hotelBroker ready => if true start COMMIT, if false start ROLLBACK
-						//##############################################
-						response = null;
+						this.updateRequestAtList(msg.getBookingID(), StatusTypes.READY, null);
+						if(this.getRequest(msg.getBookingID()).bothReady()) {
+							Message answerForHotelBroker = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+							DatagramPacket packet = new DatagramPacket(answerForHotelBroker.toString().getBytes(), answerForHotelBroker.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+							socket.send(packet);
+							response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+						} else {
+							response = null;
+						}
 					}
 					
 					//test for hotelBroker
@@ -129,18 +132,25 @@ public class ServerMessageHandler implements Runnable{
 						//stable store hotelBroker ready for BookingID
 						//##############################################
 						logger.error("HOTELBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
+						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY);
 						//check if stable store already has the carBroker ready => if true start COMMIT, if false start ROLLBACK
 						//##############################################
-						response = null;
+						if(this.getRequest(msg.getBookingID()).bothReady()) {
+							Message answerForCarBroker = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+							DatagramPacket packet = new DatagramPacket(answerForCarBroker.toString().getBytes(), answerForCarBroker.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+							socket.send(packet);
+							response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+						} else {
+							response = null;
+						}
 					}
-					
 					break;
 				case ABORT:
 					//test for carBroker
 					logger.error(msg.getSenderAddress());
 					logger.error(server.getBroker()[0].getAddress());
-							logger.error(msg.getSenderPort());
-									logger.error(server.getBroker()[0].getPort());
+					logger.error(msg.getSenderPort());
+					logger.error(server.getBroker()[0].getPort());
 					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						//stable store carBroker abort for BookingID
 						//##############################################
@@ -176,6 +186,7 @@ public class ServerMessageHandler implements Runnable{
 						//check if stable store already has the carBroker ACKNOWLEDGMENT => booking finished: send ACKNOWLEDGMENT to client
 						//##############################################
 					}
+					response = null;
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromCarBroker") || statusMessage.equals("HiFromHotel")) {
@@ -185,6 +196,7 @@ public class ServerMessageHandler implements Runnable{
 						logger.info("Finished test");
 						response = null;
 					}
+
 					break;
 				case ERROR:
 					break;
@@ -218,7 +230,8 @@ public class ServerMessageHandler implements Runnable{
 			serverRequest.put("RoomId", roomId);
 			serverRequest.put("StartTime", startTime.getTime());
 			serverRequest.put("EndTime", endTime.getTime());
-			serverRequest.put("State", "Initialized");
+			serverRequest.put("CarState", StatusTypes.INITIALIZED.toString());
+			serverRequest.put("HotelState", StatusTypes.INITIALIZED.toString());
 			serverRequests.add(serverRequest);
 			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
 				file.write(requestsData.toJSONString());
@@ -226,19 +239,90 @@ public class ServerMessageHandler implements Runnable{
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
 	}
 
-	private ServerRequest getRequest(int bookingId) {
+	private void updateRequestAtList(String bookingId, StatusTypes carState, StatusTypes hotelState) {
+		ServerRequest request = getRequest(bookingId);
+		boolean updated = false;
+		if(!(request.getCarBrokerState().equals(carState)) && carState != null) {
+			request.setCarBrokerState(carState);
+		}
+		if(!(request.getHotelBrokerState().equals(hotelState)) && hotelState != null) {
+			request.setHotelBrokerState(hotelState);
+		}
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		{
+			Object jsonContent = jParser.parse(reader);
+			JSONObject requestsData = (JSONObject) jsonContent;
+			Object serverRequestDataContent = requestsData.get("ServerRequests");
+			JSONArray serverRequests = (JSONArray) serverRequestDataContent;
+			for(int i = 0; i < serverRequests.size(); i++) {
+				Object requestData = serverRequests.get(i);
+				JSONObject singleRequest = (JSONObject) requestData;
+				if(carState != null && !StatusTypes.valueOf(singleRequest.get("CarState").toString()).equals(carState)) {
+					singleRequest.replace("CarState", carState.toString());
+					updated = true;
+				}
+				if(hotelState != null && !StatusTypes.valueOf(singleRequest.get("HotelState").toString()).equals(hotelState)) {
+					singleRequest.replace("HotelState", hotelState.toString());
+					updated = true;
+				}
+				if(updated) {
+					break;
+				}
+			}
+			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+				file.write(requestsData.toJSONString());
+				file.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
+	public void removeRequestFromList(String bookingId) {
+		for(int i = 0; i < requestList.size(); i++) {
+			if(this.requestList.get(i).getId().equals( bookingId)) {
+				this.requestList.remove(i);
+				break;
+			}
+		}
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		{
+			Object jsonContent = jParser.parse(reader);
+			JSONObject requestsData = (JSONObject) jsonContent;
+			Object serverRequestDataContent = requestsData.get("ServerRequests");
+			JSONArray serverRequests = (JSONArray) serverRequestDataContent;
+			for(int i = 0; i < serverRequests.size(); i++) {
+				Object requestData = serverRequests.get(i);
+				JSONObject singleRequest = (JSONObject) requestData;
+				if(singleRequest.get("BookingId").toString().equals(bookingId)) {
+					serverRequests.remove(i);
+					break;
+				}
+			}
+			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+				file.write(requestsData.toJSONString());
+				file.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
+	}
+
+	private ServerRequest getRequest(String bookingId) {
 		ServerRequest request = null;
 		for(int i = 0; i < requestList.size(); i++) {
-			if(this.requestList.get(i).getIdAsString().equals("" + bookingId + "")) {
+			if(this.requestList.get(i).getId().equals(bookingId)) {
 				request = this.requestList.get(i);
 				break;
 			}
