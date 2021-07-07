@@ -44,6 +44,7 @@ public class Message {
 		String[] msgArray = msg.split(" ");
 		if(msgArray.length == 5) {
 			try {
+				logger.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+ msgArray[0].trim());
 				status = StatusTypes.valueOf(msgArray[0].trim());
 				if(msgArray[1].trim().split("/").length > 1) {
 					senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);

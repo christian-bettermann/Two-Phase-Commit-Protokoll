@@ -26,7 +26,7 @@ public class Hotel {
     }
 
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
-        boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
+        boolean result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(target, port, bookingId, roomId, startTime, endTime);
         }

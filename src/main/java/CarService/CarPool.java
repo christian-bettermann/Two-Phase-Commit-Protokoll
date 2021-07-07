@@ -25,7 +25,7 @@ public class CarPool {
     }
 
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
-        boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
+        boolean result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(target, port, bookingId, carId, startTime, endTime);
         }
