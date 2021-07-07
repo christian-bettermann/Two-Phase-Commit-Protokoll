@@ -1,5 +1,6 @@
 package HotelService;
 
+import Message.StatusTypes;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -26,9 +27,7 @@ public class Hotel {
 
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
-        if(result) {
-            this.addRequestToList(target, port, bookingId, roomId, startTime, endTime);
-        }
+        this.addRequestToList(target, port, bookingId, roomId, startTime, endTime, result);
         return result;
     }
 
@@ -131,7 +130,8 @@ public class Hotel {
                         requestInfo.get("BookingId").toString(),
                         Integer.parseInt(requestInfo.get("RoomId").toString()),
                         new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
-                        new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
+                        new Date(Long.parseLong(requestInfo.get("EndTime").toString())),
+                        StatusTypes.valueOf(requestInfo.get("State").toString())
                 );
                 this.requestList.add(singleRoomRequest);
             }
@@ -157,8 +157,7 @@ public class Hotel {
         return result;
     }
 
-    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
-        this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime));
+    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
         {
@@ -173,6 +172,13 @@ public class Hotel {
             roomRequest.put("RoomId", carId);
             roomRequest.put("StartTime", startTime.getTime());
             roomRequest.put("EndTime", endTime.getTime());
+            if(abortOrReady) {
+                this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.READY));
+                roomRequest.put("State", StatusTypes.READY.toString());
+            } else {
+                this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
+                roomRequest.put("State", StatusTypes.ABORT.toString());
+            }
             roomRequests.add(roomRequest);
             try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
                 file.write(requestsData.toJSONString());

@@ -1,5 +1,6 @@
 package CarService;
 
+import Message.StatusTypes;
 import Request.CarRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -26,9 +27,7 @@ public class CarPool {
 
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
         boolean result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
-        if(result) {
-            this.addRequestToList(target, port, bookingId, carId, startTime, endTime);
-        }
+        this.addRequestToList(target, port, bookingId, carId, startTime, endTime, result);
         return result;
     }
 
@@ -131,7 +130,8 @@ public class CarPool {
                         requestInfo.get("BookingId").toString(),
                         Integer.parseInt(requestInfo.get("CarId").toString()),
                         new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
-                        new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
+                        new Date(Long.parseLong(requestInfo.get("EndTime").toString())),
+                        StatusTypes.valueOf(requestInfo.get("State").toString())
                 );
                 this.requestList.add(singleCarRequest);
             }
@@ -157,8 +157,7 @@ public class CarPool {
         return result;
     }
 
-    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
-        this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime));
+    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
         {
@@ -173,6 +172,13 @@ public class CarPool {
             carRequest.put("CarId", carId);
             carRequest.put("StartTime", startTime.getTime());
             carRequest.put("EndTime", endTime.getTime());
+            if(abortOrReady) {
+                carRequest.put("State", StatusTypes.READY.toString());
+                this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.READY));
+            } else {
+                carRequest.put("State", StatusTypes.ABORT.toString());
+                this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
+            }
             carRequests.add(carRequest);
             try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
                 file.write(requestsData.toJSONString());
@@ -191,7 +197,7 @@ public class CarPool {
 
     public void removeRequestFromList(int bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getIdAsString().equals("" + bookingId + "")) {
                 this.requestList.remove(i);
                 break;
             }
