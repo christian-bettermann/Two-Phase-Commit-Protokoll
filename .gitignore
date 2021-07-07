@@ -1,3 +1,8 @@
+# Ignore request files
+src/main/resources/HotelService/requests.json
+src/main/resources/CarService/requests.json
+src/main/resources/Server/requests_Server_1.json
+src/main/resources/Server/requests_Server_2.json
 # Maven files
 target/
 pom.xml.tag

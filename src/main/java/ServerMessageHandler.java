@@ -103,8 +103,9 @@ public class ServerMessageHandler implements Runnable{
 						//stable store carBroker ready for BookingID
 						//##############################################
 						logger.error("CARBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
-						//check if stable store already has the hotelBroker ready => if true start commit
+						//check if stable store already has the hotelBroker ready => if true start COMMIT, if false start ROLLBACK
 						//##############################################
+						response = null;
 					}
 					
 					//test for hotelBroker
@@ -112,9 +113,11 @@ public class ServerMessageHandler implements Runnable{
 						//stable store hotelBroker ready for BookingID
 						//##############################################
 						logger.error("HOTELBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
-						//check if stable store already has the carBroker ready => if true start commit
+						//check if stable store already has the carBroker ready => if true start COMMIT, if false start ROLLBACK
 						//##############################################
+						response = null;
 					}
+					
 					break;
 				case ABORT:
 					//test for carBroker

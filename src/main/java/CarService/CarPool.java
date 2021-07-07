@@ -167,7 +167,7 @@ public class CarPool {
             Object carRequestDataContent = requestsData.get("CarRequests");
             JSONArray carRequests = (JSONArray) carRequestDataContent;
             JSONObject carRequest = new JSONObject();
-            carRequest.put("Target_IP", target.toString());
+            carRequest.put("Target_IP", target.toString().replace("/", ""));
             carRequest.put("Target_Port", port);
             carRequest.put("BookingId", bookingId);
             carRequest.put("CarId", carId);

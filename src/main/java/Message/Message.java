@@ -44,6 +44,7 @@ public class Message {
 		String[] msgArray = msg.split(" ");
 		if(msgArray.length == 5) {
 			try {
+				logger.error("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"+ msgArray[0].trim());
 				status = StatusTypes.valueOf(msgArray[0].trim());
 				if(msgArray[1].trim().split("/").length > 1) {
 					senderAddress = InetAddress.getByName(msgArray[1].trim().split("/")[1]);
@@ -95,7 +96,7 @@ public class Message {
 	}
 
 	public String toString() {
-		if(senderAddress.toString().charAt(0) == '/') {
+		if(senderAddress != null && senderAddress.toString().charAt(0) == '/') {
 			return status + " " + senderAddress.toString().trim().split("/")[1] + " " + senderPort + " " + bookingID + " " + statusMessage;
 		}
 		return status + " " + senderAddress + " " + senderPort + " " + bookingID + " " + statusMessage;

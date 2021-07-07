@@ -87,7 +87,7 @@ public class Client implements Runnable {
 			            car.put("HorsePower", info[3]);
 			            car.put("Type", info[4]);
 			            carsJson.add(car);
-			            cars.addItem(info[1] +" "+ info[2]);
+			            cars.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2]);
 			    	}
 			    }
 			    
@@ -104,9 +104,9 @@ public class Client implements Runnable {
 			            room.put("Type", info[4]);
 			            roomsJson.add(room);
 			            if(Integer.parseInt(info[1]) > 1) {
-			            	rooms.addItem(info[1] +" "+ info[2] +" Beds "+ info[4] +" Room");
+			            	rooms.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2] +" Beds "+ info[4] +" Room");
 			            } else {
-			            	rooms.addItem(info[1] +" "+ info[2] +" Bed "+ info[4] +" Room");
+			            	rooms.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2] +" Bed "+ info[4] +" Room");
 			            }
 			            
 			    	}
