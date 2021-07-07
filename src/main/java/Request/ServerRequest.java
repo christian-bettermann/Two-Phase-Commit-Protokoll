@@ -7,7 +7,7 @@ public class ServerRequest extends Request{
     private int carId;
     private int roomId;
 
-    public ServerRequest(int pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime) {
+    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime) {
         this.id = pBookingId;
         this.carId = pCarId;
         this.roomId = pRoomId;

@@ -7,7 +7,7 @@ public abstract class Request {
     //Attribute
     protected InetAddress targetIp;
     protected int targetPort;
-    protected int id;
+    protected String id;
     protected Date startTime;
     protected Date endTime;
 
@@ -19,7 +19,7 @@ public abstract class Request {
         return targetPort;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 

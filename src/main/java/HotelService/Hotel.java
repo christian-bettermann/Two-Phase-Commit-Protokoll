@@ -25,7 +25,7 @@ public class Hotel {
         this.requestList = new ArrayList<RoomRequest>();
     }
 
-    public boolean checkRoomOfId(InetAddress target, int port, int bookingId, int roomId, Date startTime, Date endTime) {
+    public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(target, port, bookingId, roomId, startTime, endTime);
@@ -129,7 +129,7 @@ public class Hotel {
                 JSONObject requestInfo = (JSONObject) singleRoomRequestData;
                 RoomRequest singleRoomRequest = new RoomRequest(InetAddress.getByName(requestInfo.get("Target_IP").toString()),
                         Integer.parseInt(requestInfo.get("Target_Port").toString()),
-                        Integer.parseInt(requestInfo.get("BookingId").toString()),
+                        requestInfo.get("BookingId").toString(),
                         Integer.parseInt(requestInfo.get("RoomId").toString()),
                         new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
                         new Date(Long.parseLong(requestInfo.get("EndTime").toString()))
@@ -158,7 +158,7 @@ public class Hotel {
         return result;
     }
 
-    public void addRequestToList(InetAddress target, int port, int bookingId, int carId, Date startTime, Date endTime) {
+    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
         this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime));
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
