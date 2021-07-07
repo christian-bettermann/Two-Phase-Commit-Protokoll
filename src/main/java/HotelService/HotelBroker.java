@@ -83,7 +83,7 @@ public class HotelBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
-					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsFree");
 
 						//write to stable store

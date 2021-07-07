@@ -106,7 +106,7 @@ public class Hotel {
                     JSONObject singleBookingData = (JSONObject) singleBooking;
                     String startTime = singleBookingData.get("StartTime").toString();
                     String endTime = singleBookingData.get("EndTime").toString();
-                    singleRoom.bookRoom(new Date(Integer.parseInt(startTime)), new Date(Integer.parseInt(endTime)));
+                    singleRoom.bookRoom(new Date(Long.parseLong(startTime)), new Date(Long.parseLong(endTime)));
                 }
                 this.roomList.add(singleRoom);
             }

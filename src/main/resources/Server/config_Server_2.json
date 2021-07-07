@@ -1,5 +1,5 @@
 {
-  "serviceName": "ServerOne",
+  "serviceName": "ServerTwo",
   "ip": "localhost",
   "port": "30801",
   "carBrokerIp": "localhost",

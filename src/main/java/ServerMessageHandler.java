@@ -100,7 +100,7 @@ public class ServerMessageHandler implements Runnable{
 						DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 						logger.trace("<" + name + "> sent: <"+ new String(preparePacketHotel.getData(), 0, preparePacketHotel.getLength()) +">");
 						socket.send(preparePacketHotel);
-						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageHotelId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()));
+						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageRoomId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()));
 					} else {
 						response = new Message(StatusTypes.ERROR, InetAddress.getLocalHost(), socket.getLocalPort(), null, "ERROR_Invalid_Booking");
 					}
@@ -154,11 +154,11 @@ public class ServerMessageHandler implements Runnable{
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ABORT, null);
 						if(this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
-							Message answerForHotelBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
+							Message answerForHotelBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
 							DatagramPacket packet = new DatagramPacket(answerForHotelBroker.toString().getBytes(), answerForHotelBroker.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 							logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 							socket.send(packet);
-							response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
+							response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
 						}
 					} else {
 						response = null;
@@ -169,11 +169,11 @@ public class ServerMessageHandler implements Runnable{
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ABORT);
 						if(this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
-							Message answerForCarBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
+							Message answerForCarBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
 							DatagramPacket packet = new DatagramPacket(answerForCarBroker.toString().getBytes(), answerForCarBroker.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
 							logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 							socket.send(packet);
-							response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
+							response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
 						}
 					} else {
 						response = null;
@@ -183,12 +183,18 @@ public class ServerMessageHandler implements Runnable{
 					if(msg.getSenderAddress() == server.getBroker()[0].getAddress() && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ACKNOWLEDGMENT, null);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
+							//send ACKNOWLEDGEMENT or ERROR (if rollback) to client
+							//###########################################################
+							
 							this.removeRequestFromList(msg.getBookingID());
 						}
 					}
 					if(msg.getSenderAddress() == server.getBroker()[1].getAddress() && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ACKNOWLEDGMENT);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
+							//send ACKNOWLEDGEMENT or ERROR (if rollback) to client
+							//###########################################################
+							
 							this.removeRequestFromList(msg.getBookingID());
 						}
 					}

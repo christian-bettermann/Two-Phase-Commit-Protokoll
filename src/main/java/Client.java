@@ -5,12 +5,16 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.Date;
+import java.util.Enumeration;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import javax.swing.*;
+import javax.swing.text.DefaultCaret;
+
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.simple.JSONArray;
@@ -28,7 +32,9 @@ public class Client implements Runnable {
 	private DatagramSocket socket;
 	private byte[] buffer = new byte[1024];
 	int localPort;
-	int serverPort = 30800; //serverTwo 30801;
+	int serverPort = 30800;
+	private JTextArea textArea;
+	private ButtonGroup bg;
 	
 	public Client(int clientPort) {
 		logger.trace("Creating Client...");
@@ -124,42 +130,65 @@ public class Client implements Runnable {
 		JLabel c = new JLabel("Car:");
 		JLabel r = new JLabel("Room:");
 	    	    
-	    c.setBounds(50, 25, 90, 20);
-	    r.setBounds(150, 25, 90, 20);
-	    cars.setBounds(50, 50, 90, 20);    
-	    rooms.setBounds(150, 50, 190, 20); 
+	    c.setBounds(160, 25, 90, 20);
+	    r.setBounds(260, 25, 90, 20);
+	    cars.setBounds(160, 50, 90, 20);    
+	    rooms.setBounds(260, 50, 190, 20); 
 	    
 	    f.add(c);
 	    f.add(r);
 	    f.add(cars);
 	    f.add(rooms);
 	       
-	    f.setSize(390, 500);
+	    f.setSize(610, 500);
 	    f.setLayout(null); 
 	    
 		JButton b = new JButton("Send Booking");
-		b.setBounds(50, 400, 290, 40);		          
+		b.setBounds(50, 400, 510, 40);		          
 		f.add(b); 
 
 		JLabel st = new JLabel("Start date:");
-		st.setBounds(50, 100, 190, 20);
+		st.setBounds(160, 100, 190, 20);
 		JDateChooser startDateChooser = new JDateChooser();
 		startDateChooser.setLocale(Locale.GERMANY);
-		startDateChooser.setBounds(150, 100, 190, 20);
+		startDateChooser.setBounds(260, 100, 190, 20);
 		f.add(st);
 		f.add(startDateChooser);
 		startDateChooser.setVisible(true);
 		st.setVisible(true);
 		
 		JLabel et = new JLabel("End date:");
-		et.setBounds(50, 150, 190, 20);
+		et.setBounds(160, 150, 190, 20);
 		JDateChooser endDateChooser = new JDateChooser();
 		endDateChooser.setLocale(Locale.GERMANY);
-		endDateChooser.setBounds(150, 150, 190, 20);
+		endDateChooser.setBounds(260, 150, 190, 20);
 		f.add(et);
 		f.add(endDateChooser);
 		et.setVisible(true);
 		endDateChooser.setVisible(true);
+		
+		bg = new ButtonGroup();
+		JLabel bglabel = new JLabel("Connecting to:");
+		bglabel.setBounds(160, 200, 100, 20);
+		f.add(bglabel);
+		JRadioButton rbsone = new JRadioButton("Server1", true);
+		JRadioButton rbstwo = new JRadioButton("Server2", false);
+		rbsone.setBounds(260, 200, 100, 20);
+		rbstwo.setBounds(360, 200, 100, 20);
+		bg.add(rbsone);
+		bg.add(rbstwo);
+		f.add(rbsone);
+		f.add(rbstwo);
+		
+		textArea = new JTextArea();
+		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
+		caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
+		textArea.setBounds(50, 230, 510, 150);
+		textArea.setEditable(false);
+		textArea.setLineWrap(true);
+		JScrollPane scroll = new JScrollPane(textArea);
+		scroll.setBounds(50, 230, 510, 150);
+		f.add(scroll);
 		
 		f.setVisible(true);  
 		
@@ -174,13 +203,73 @@ public class Client implements Runnable {
 		    }
 		});
 		
-		
 		//start receiving from servers
-		//handle BOOKING & ACKNOWLEDGMENT & ERROR for bookingRequest
-		//####################################################
+		boolean online = true;
+        while (online) {
+        	try {
+        		buffer = new byte[1024];
+        		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
+				socket.receive(dp);
+	            InetAddress address = dp.getAddress();
+	            int port = dp.getPort();
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
+	            logger.info("HotelBroker received: <"+ received.toString() +">");
+				Message response = this.analyzeAndGetResponse(received);
+				if(response != null) {
+					buffer = response.toString().getBytes();
+					dp = new DatagramPacket(buffer, buffer.length, address, port);
+					logger.trace("HotelBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+		            socket.send(dp);
+				}
+        	} catch (SocketTimeoutException e) {
+	            //Timeout
+		    	logger.trace("ClientSocket timeout (no message received)!");
+	        }catch (IOException e) {
+				e.printStackTrace();
+			}
+        }
+        socket.close();
 	}
 	
+	//handle BOOKING & ACKNOWLEDGMENT & ERROR for bookingRequest
+	private Message analyzeAndGetResponse(Message msg) {
+		String statusMessage = msg.getStatusMessage();
+		Message response = new Message();
+		try {
+			switch(msg.getStatus()) {
+				case BOOKING:
+					textArea.append("=> Server RECEIVED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+					response = null;
+					break;
+				case ACKNOWLEDGMENT:
+					textArea.append("=> Server CHECKED & COMMITTED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+					
+					response = null;
+					break;
+				case ERROR:
+					if(msg.getStatusMessage().equals("ERROR_Invalid_Booking")) {
+						textArea.append("=> Server received invalid Booking Request\n\n");
+						
+					} else {
+						textArea.append("=> Server CHECKED & DENIED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+						
+					}
+					
+					response = null;
+					break;
+				default:
+					response = null;
+					break;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return response;
+	}
+			
+	
 	public void sendBooking(String carID, String hotelID, String startTime, String endTime) {
+		setSelectedServerPort(bg);
 		Message m = new Message(StatusTypes.BOOKING, localAddress, localPort, "0", buildStatusMessage(carID, hotelID, startTime, endTime));
         logger.info("Trying to book the trip from "+ new Date(m.getStatusMessageStartTime()) +" until "+ new Date(m.getStatusMessageEndTime()) +" with the car "+ carID +" and the hotel "+ hotelID +".");
         DatagramPacket booking = new DatagramPacket(m.toString().getBytes(), m.toString().getBytes().length, serverAddress, serverPort);
@@ -194,4 +283,19 @@ public class Client implements Runnable {
 	public static String buildStatusMessage(String carID, String hotelID, String start, String end) {
 		return carID + "_" + hotelID + "_" + start + "_" + end;
 	}
+	
+	public void setSelectedServerPort(ButtonGroup buttonGroup) {
+        for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
+            AbstractButton button = buttons.nextElement();
+            if (button.isSelected()) {
+            	
+            	if(button.getText().equals("Server1")) {
+            		serverPort = 30800;
+            	}
+            	if(button.getText().equals("Server2")) {
+            		serverPort = 30801;
+            	}
+            }
+        }
+    }
 }
