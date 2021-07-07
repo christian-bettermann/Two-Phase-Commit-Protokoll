@@ -7,7 +7,6 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.SocketException;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Date;
 
@@ -77,8 +76,11 @@ public class CarBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all cars
-					//#####################################
-					response = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), msg.getBookingID(), pool.getInfoOfCars());;
+					Message res = new Message(StatusTypes.INFOCARS, localAddress, socket.getLocalPort(), "0", pool.getInfoOfCars());
+					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
+					socket.send(packetCar);
+					response = null;
 					break;
 				case PREPARE:
 					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {

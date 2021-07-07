@@ -5,9 +5,13 @@ import java.util.Date;
 
 public abstract class Request {
     //Attribute
+<<<<<<< HEAD
     protected InetAddress targetIp;
     protected int targetPort;
     protected int id;
+=======
+    protected String id;
+>>>>>>> 16cead524efdd10fc025577fa2ad523e2e7cd54c
     protected Date startTime;
     protected Date endTime;
 
@@ -19,7 +23,7 @@ public abstract class Request {
         return targetPort;
     }
 
-    public int getId() {
+    public String getId() {
         return id;
     }
 

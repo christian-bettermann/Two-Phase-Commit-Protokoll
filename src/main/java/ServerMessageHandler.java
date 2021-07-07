@@ -99,38 +99,42 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case READY:
 					//test for carBroker
-					if(msg.getSenderAddress() == server.getBroker()[0].getAddress() && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						//stable store carBroker ready for BookingID
 						//##############################################
-						
+						logger.error("CARBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
 						//check if stable store already has the hotelBroker ready => if true start commit
 						//##############################################
 					}
 					
 					//test for hotelBroker
-					if(msg.getSenderAddress() == server.getBroker()[1].getAddress() && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						//stable store hotelBroker ready for BookingID
 						//##############################################
-						
+						logger.error("HOTELBROKER MESSAGE READY!!!!!!!!!!!!!!!!!!!");
 						//check if stable store already has the carBroker ready => if true start commit
 						//##############################################
 					}
 					break;
 				case ABORT:
 					//test for carBroker
-					if(msg.getSenderAddress() == server.getBroker()[0].getAddress() && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					logger.error(msg.getSenderAddress());
+					logger.error(server.getBroker()[0].getAddress());
+							logger.error(msg.getSenderPort());
+									logger.error(server.getBroker()[0].getPort());
+					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						//stable store carBroker abort for BookingID
 						//##############################################
-						
+						logger.error("CARBROKER MESSAGE ABORT!!!!!!!!!!!!!!!!!!!");
 						//send rollback to all brokers => booking failed: send ERROR to client for bookingID
 						//##############################################
 					}
 					
 					//test for hotelBroker
-					if(msg.getSenderAddress() == server.getBroker()[1].getAddress() && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						//stable store hotelBroker abort for BookingID
 						//##############################################
-						
+						logger.error("HOTELBROKER MESSAGE ABORT!!!!!!!!!!!!!!!!!!!");
 						//send rollback to all brokers => booking failed: send ERROR to client for bookingID
 						//##############################################
 					}

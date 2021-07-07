@@ -11,7 +11,6 @@ import java.util.ArrayList;
 import java.util.Date;
 
 import Message.*;
-import Request.CarRequest;
 import Request.RoomRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -79,12 +78,16 @@ public class HotelBroker implements Runnable {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
-					//########################################
-					response = new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), msg.getBookingID(), hotel.getInfoOfRooms());
+					Message res= new Message(StatusTypes.INFOROOMS, localAddress, socket.getLocalPort(), "0", hotel.getInfoOfRooms());
+					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
+					socket.send(packetHotel);
+					response = null;
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = new Message(StatusTypes.READY, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
+
 						//write to stable store
 						//#################################
 					} else {
@@ -96,7 +99,7 @@ public class HotelBroker implements Runnable {
 				case COMMIT:
 					//proceed with booking of room
 					//write to stable store
-					this.hotel.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 					break;
@@ -104,7 +107,7 @@ public class HotelBroker implements Runnable {
 					//cancel booking of room
 					//write to stable store
 					//#################################
-					this.hotel.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
+					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, localAddress, socket.getLocalPort(), msg.getBookingID(), "");
 					break;

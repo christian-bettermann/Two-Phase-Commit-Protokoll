@@ -27,7 +27,6 @@ public class Hotel {
         this.requestList = new ArrayList<RoomRequest>();
     }
 
-
     public boolean checkRoomOfId(InetAddress target, int port, int bookingId, int roomId, Date startTime, Date endTime) {
         boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
         if(result) {
@@ -36,7 +35,7 @@ public class Hotel {
         return result;
     }
 
-    public void commitRequestOfBookingID(int bookingID) {
+    public void commitRequestOfBookingID(String bookingID) {
         RoomRequest request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
@@ -69,16 +68,16 @@ public class Hotel {
         this.removeRequestFromList(bookingID);
     }
 
-    public void roolbackRequestOfBookingID(int bookingID) {
+    public void roolbackRequestOfBookingID(String bookingID) {
         RoomRequest request = getRequest(bookingID);
         roomList.get(request.getRoomId()).removeBooking(request.getStartTime(), request.getEndTime());
         this.removeRequestFromList(bookingID);
     }
 
-    private RoomRequest getRequest(int bookingId) {
+    private RoomRequest getRequest(String bookingId) {
         RoomRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getId() == bookingId) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -97,7 +96,7 @@ public class Hotel {
             for (int i = 0; i < roomJsonArray.size(); i++) {
                 Object singleRoomData = roomJsonArray.get(i);
                 JSONObject roomInfo = (JSONObject) singleRoomData;
-                Room singleRoom = new Room(roomInfo.get("Id").toString(),
+                Room singleRoom = new Room(Integer.parseInt(roomInfo.get("Id").toString()),
                         Integer.parseInt(roomInfo.get("Beds").toString()),
                         BedTypes.valueOf(roomInfo.get("BedType").toString()),
                         Integer.parseInt(roomInfo.get("Bath").toString()),
@@ -193,7 +192,7 @@ public class Hotel {
         }
     }
 
-    public void removeRequestFromList(int bookingId) {
+    public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId() == bookingId) {
                 this.requestList.remove(i);
@@ -210,7 +209,7 @@ public class Hotel {
             for(int i = 0; i < roomRequests.size(); i++) {
                 Object requestData = roomRequests.get(i);
                 JSONObject singleRequest = (JSONObject) requestData;
-                if(Integer.parseInt(singleRequest.get("BookingId").toString()) == bookingId) {
+                if(singleRequest.get("BookingId").equals(bookingId)) {
                     roomRequests.remove(i);
                     break;
                 }
