@@ -85,12 +85,12 @@ public class HotelBroker implements Runnable {
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()), Integer.parseInt(msg.getStatusMessageHotelId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
+						response = new Message(StatusTypes.READY, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsFree");
 
 						//write to stable store
 						//#################################
 					} else {
-						response = new Message(StatusTypes.ABORT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
+						response = new Message(StatusTypes.ABORT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsAlreadyBlocked");
 						//write to stable store
 						//#################################
 					}
@@ -100,7 +100,7 @@ public class HotelBroker implements Runnable {
 					//write to stable store
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "ReservationHasBeenBooked");
 					break;
 				case ROLLBACK:
 					//cancel booking of room
@@ -108,7 +108,7 @@ public class HotelBroker implements Runnable {
 					//#################################
 					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {

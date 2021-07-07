@@ -84,11 +84,11 @@ public class CarBroker implements Runnable {
 					break;
 				case PREPARE:
 					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), Integer.parseInt(msg.getBookingID()),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, this.localAddress, this.carBrokerPort, msg.getBookingID(), "");
+						response = new Message(StatusTypes.READY, this.localAddress, this.carBrokerPort, msg.getBookingID(), "CarIsFree");
 						//write to stable store
 						//############################
 					} else {
-						response = new Message(StatusTypes.ABORT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "");
+						response = new Message(StatusTypes.ABORT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "CarIsAlreadyBlocked");
 						//write to stable store
 						//############################
 					}
@@ -98,7 +98,7 @@ public class CarBroker implements Runnable {
 					//write to stable store
 					this.pool.commitRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenBooked");
 					break;
 				case ROLLBACK:
 					//cancel booking of car
@@ -106,7 +106,7 @@ public class CarBroker implements Runnable {
 					//############################
 					this.pool.roolbackRequestOfBookingID(Integer.parseInt(msg.getBookingID()));
 					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "");
+					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
