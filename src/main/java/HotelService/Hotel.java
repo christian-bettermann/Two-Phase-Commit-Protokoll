@@ -168,7 +168,7 @@ public class Hotel {
             Object carRequestDataContent = requestsData.get("RoomRequests");
             JSONArray roomRequests = (JSONArray) carRequestDataContent;
             JSONObject roomRequest = new JSONObject();
-            roomRequest.put("Target_IP", target.toString());
+            roomRequest.put("Target_IP", target.toString().replace("/", ""));
             roomRequest.put("Target_Port", port);
             roomRequest.put("BookingId", bookingId);
             roomRequest.put("RoomId", carId);

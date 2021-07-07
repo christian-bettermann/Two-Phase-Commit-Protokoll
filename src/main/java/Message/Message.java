@@ -95,7 +95,7 @@ public class Message {
 	}
 
 	public String toString() {
-		if(senderAddress.toString().charAt(0) == '/') {
+		if(senderAddress != null && senderAddress.toString().charAt(0) == '/') {
 			return status + " " + senderAddress.toString().trim().split("/")[1] + " " + senderPort + " " + bookingID + " " + statusMessage;
 		}
 		return status + " " + senderAddress + " " + senderPort + " " + bookingID + " " + statusMessage;
