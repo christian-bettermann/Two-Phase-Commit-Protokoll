@@ -75,7 +75,7 @@ public class CarPool {
     private CarRequest getRequest(int bookingId) {
         CarRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getId().toString().equals(bookingId)) {
+            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -192,7 +192,7 @@ public class CarPool {
 
     public void removeRequestFromList(int bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getId().equals(bookingId)) {
+            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
                 this.requestList.remove(i);
                 break;
             }
