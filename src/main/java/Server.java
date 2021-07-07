@@ -1,3 +1,5 @@
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -11,8 +13,13 @@ import java.util.concurrent.TimeUnit;
 import Message.*;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.simple.JSONObject;
+import org.json.simple.parser.JSONParser;
+import org.json.simple.parser.ParseException;
 
 public class Server implements Runnable {
+	//Attribute
+	private int id;
 	private static final Logger logger = LogManager.getRootLogger();
 	private DatagramSocket socket;
 	private byte[] buffer = new byte[1024];
@@ -24,22 +31,44 @@ public class Server implements Runnable {
     boolean brokerToCheckOnline;
     Broker[] broker = new Broker[2];
     
-	public Server (String serverName, int serverPort, InetAddress carBrokerAddress, int carBrokerPort, InetAddress hotelBrokerAddress, int hotelBrokerPort) {
+	public Server (int id) {
 		logger.trace("Creating Server <" + serverName + ">...");
 		try {
 			localAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
+		Broker car;
+		Broker hotel;
+		InetAddress carBrokerAddress;
+		InetAddress hotelBrokerAddress;
+		int carBrokerPort;
+		int hotelBrokerPort;
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader("src/main/resources/CarService/config_Server_" + id + ".json"))
+		{
+			Object jsonContent = jParser.parse(reader);
+			JSONObject configData = (JSONObject) jsonContent;
+			this.serverName = configData.get("serviceName").toString();
+			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
+			this.serverPort = Integer.parseInt(configData.get("port").toString());
+			carBrokerAddress = InetAddress.getByName(configData.get("carBrokerIp").toString());
+			hotelBrokerAddress = InetAddress.getByName(configData.get("hotelBrokerIp").toString());
+			carBrokerPort = Integer.parseInt(configData.get("carBrokerPort").toString());
+			hotelBrokerPort = Integer.parseInt(configData.get("hotelBrokerPort").toString());
+			car = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
+			hotel = new Broker("HotelBroker", hotelBrokerAddress, hotelBrokerPort);
+			broker[0] = car;
+			broker[1] = hotel;
+		} catch (FileNotFoundException e) {
+			e.printStackTrace();
+		} catch (IOException e) {
+			e.printStackTrace();
+		} catch (ParseException e) {
+			e.printStackTrace();
+		}
 		incomingMessages = new ArrayBlockingQueue<Message>(1024);
-		this.serverName = serverName;
-		this.serverPort = serverPort;
 		brokerToCheckOnline = false;
-		
-		Broker car = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
-		Broker hotel = new Broker("HotelBroker", hotelBrokerAddress, hotelBrokerPort);
-		broker[0] = car;
-		broker[1] = hotel;
 	}
 	
 	public void run() {

@@ -1,0 +1,9 @@
+{
+  "serviceName": "ServerOne",
+  "ip": "localhost",
+  "port": "30800",
+  "carBrokerIp": "localhost",
+  "carBrokerPort": "30901",
+  "hotelBrokerIp": "localhost",
+  "hotelBrokerPort": "30902"
+}

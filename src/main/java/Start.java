@@ -1,5 +1,3 @@
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -8,8 +6,6 @@ import CarService.CarBroker;
 import HotelService.HotelBroker;
 
 public class Start {
-	static InetAddress carBrokerAddress;
-	static InetAddress hotelBrokerAddress;
 	private static final Logger logger = LogManager.getRootLogger();
 	
 	public static void main(String[] args) {
@@ -17,23 +13,13 @@ public class Start {
 		Configurator.setRootLevel(Level.TRACE);
 
 		logger.info("Starting System...");
-		int firstServerPort = 30800;
-		int secondServerPort = 30801;
-		try {
-			carBrokerAddress = InetAddress.getByName("localhost");
-			hotelBrokerAddress = InetAddress.getByName("localhost");
-		} catch (UnknownHostException e) {
-			e.printStackTrace();
-		}
-		int carBrokerPort = 30901;
-		int hotelBrokerPort = 30902;
 		int clientPort = 33091;
 		
 		//Start Brokers
 		CarBroker carBroker = new CarBroker();
 		HotelBroker hotelBroker = new HotelBroker();
-		Server serverOne = new Server("ServerOne", firstServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
-		Server serverTwo = new Server("ServerTwo", secondServerPort, carBrokerAddress, carBrokerPort, hotelBrokerAddress, hotelBrokerPort);
+		Server serverOne = new Server(1);
+		Server serverTwo = new Server(2);
 		Client client = new Client(clientPort);
 		
 		

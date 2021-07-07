@@ -168,7 +168,7 @@ public class ControlPanel implements Runnable {
 		    		
 		    		int startServerOnePort = serverOne.serverPort;
 		    		serverOne.closeSocket(); //free port
-		    		Server serverOne = new Server("ServerOne", startServerOnePort, carBroker.getLocalAddress(), carBroker.getPort(), hotelBroker.getLocalAddress(), hotelBroker.getPort());
+		    		Server serverOne = new Server(1);
 		    		serverOneThread = new Thread(serverOne);
 		    		serverOneThread.start();
 		    		
@@ -207,7 +207,7 @@ public class ControlPanel implements Runnable {
 		    		
 		    		int startServerTwoPort = serverTwo.serverPort;
 		    		serverTwo.closeSocket(); //free port
-		    		serverTwo = new Server("ServerTwo", startServerTwoPort, carBroker.getLocalAddress(), carBroker.getPort(), hotelBroker.getLocalAddress(), hotelBroker.getPort());
+		    		serverTwo = new Server(2);
 		    		serverTwoThread = new Thread(serverTwo);
 		    		serverTwoThread.start();
 		    		
