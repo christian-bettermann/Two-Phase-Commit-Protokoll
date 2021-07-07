@@ -1,6 +1,5 @@
 package HotelService;
 
-import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -26,7 +25,7 @@ public class Hotel {
     }
 
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
-        boolean result = this.roomList.get(roomId).checkAndBookIfFree(startTime, endTime);
+        boolean result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(target, port, bookingId, roomId, startTime, endTime);
         }
@@ -42,7 +41,7 @@ public class Hotel {
             JSONObject roomData = (JSONObject) jsonContent;
             Object roomDataContent = roomData.get("rooms");
             JSONArray roomJsonArray = (JSONArray) roomDataContent;
-            Object singleRoomObject = roomJsonArray.get(request.getRoomId());
+            Object singleRoomObject = roomJsonArray.get(request.getRoomId() - 1);
             JSONObject singleRoom = (JSONObject) singleRoomObject;
             Object reservationsObject = singleRoom.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
@@ -68,7 +67,7 @@ public class Hotel {
 
     public void roolbackRequestOfBookingID(String bookingID) {
         RoomRequest request = getRequest(bookingID);
-        roomList.get(request.getRoomId()).removeBooking(request.getStartTime(), request.getEndTime());
+        roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
         this.removeRequestFromList(bookingID);
     }
 

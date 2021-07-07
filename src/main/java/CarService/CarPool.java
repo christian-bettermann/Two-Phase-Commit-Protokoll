@@ -25,7 +25,7 @@ public class CarPool {
     }
 
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
-        boolean result = this.carList.get(carId).checkAndBookIfFree(startTime, endTime);
+        boolean result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
         if(result) {
             this.addRequestToList(target, port, bookingId, carId, startTime, endTime);
         }
@@ -41,7 +41,7 @@ public class CarPool {
             JSONObject carData = (JSONObject) jsonContent;
             Object roomDataContent = carData.get("cars");
             JSONArray carJsonArray = (JSONArray) roomDataContent;
-            Object singleCarObject = carJsonArray.get(request.getCarId());
+            Object singleCarObject = carJsonArray.get(request.getCarId() - 1);
             JSONObject singleCar = (JSONObject) singleCarObject;
             Object reservationsObject = singleCar.get("Reservations");
             JSONArray reservations = (JSONArray) reservationsObject;
@@ -67,7 +67,7 @@ public class CarPool {
 
     public void roolbackRequestOfBookingID(int bookingID) {
         CarRequest request = getRequest(bookingID);
-        carList.get(request.getCarId()).removeBooking(request.getStartTime(), request.getEndTime());
+        carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
         removeRequestFromList(bookingID);
     }
 
