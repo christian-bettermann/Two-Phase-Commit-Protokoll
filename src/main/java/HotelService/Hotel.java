@@ -89,7 +89,7 @@ public class Hotel {
                         Integer.parseInt(roomInfo.get("Bath").toString()),
                         RoomTypes.valueOf(roomInfo.get("Type").toString())
                 );
-                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray("Reservations");
+                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(roomInfo.get("Reservations"));
                 for(int j = 0; j < reservationJsonArray.size(); j++) {
                     JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
                     String startTime = singleBookingData.get("StartTime").toString();

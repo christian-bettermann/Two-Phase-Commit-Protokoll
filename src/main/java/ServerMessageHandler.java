@@ -8,6 +8,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+
+import JsonUtility.JsonHandler;
 import Message.*;
 import Request.ServerRequest;
 import org.apache.logging.log4j.LogManager;
@@ -20,6 +22,8 @@ import org.json.simple.parser.ParseException;
 public class ServerMessageHandler implements Runnable{
 	//Attribute
 	private final int id;
+	private final String requestFilePath;
+	private final JsonHandler jsonHandler;
 	private static final Logger logger = LogManager.getRootLogger();
 	private final DatagramSocket socket;
 	private final BlockingQueue<Message> incomingMessages;
@@ -31,6 +35,8 @@ public class ServerMessageHandler implements Runnable{
 	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.id = id;
+		this.jsonHandler = new JsonHandler();
+		this.requestFilePath = "src/main/resources/Server/requests_Server_" + id + ".json";
 		this.incomingMessages = incomingMessages;
 		this.name = name;
 		this.socket = socket;
@@ -60,7 +66,7 @@ public class ServerMessageHandler implements Runnable{
 	
 	private Message analyzeAndGetResponse(Message msg) {
 		String statusMessage = msg.getStatusMessage();
-		Message response = new Message();
+		Message response = null;
 		ServerRequest request = this.getRequest(msg.getBookingID());
 		try {
 			switch(msg.getStatus()) {
@@ -199,7 +205,7 @@ public class ServerMessageHandler implements Runnable{
 						response = new Message(StatusTypes.TESTING, InetAddress.getLocalHost(), socket.getLocalPort(), "0", "HiFromServerMessageHandler");
 					}
 					if(statusMessage.equals("OK")) {
-						logger.info("Finished test");
+						logger.info("FINISHED TEST");
 						response = null;
 					}
 					break;
@@ -224,7 +230,7 @@ public class ServerMessageHandler implements Runnable{
 	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime) {
 		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime));
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
 			Object jsonContent = jParser.parse(reader);
 			JSONObject requestsData = (JSONObject) jsonContent;
@@ -239,7 +245,7 @@ public class ServerMessageHandler implements Runnable{
 			serverRequest.put("CarState", StatusTypes.INITIALIZED.toString());
 			serverRequest.put("HotelState", StatusTypes.INITIALIZED.toString());
 			serverRequests.add(serverRequest);
-			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
 			} catch (IOException e) {
@@ -260,15 +266,12 @@ public class ServerMessageHandler implements Runnable{
 			request.setHotelBrokerState(hotelState);
 		}
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
-			Object jsonContent = jParser.parse(reader);
-			JSONObject requestsData = (JSONObject) jsonContent;
-			Object serverRequestDataContent = requestsData.get("ServerRequests");
-			JSONArray serverRequests = (JSONArray) serverRequestDataContent;
+			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+			JSONArray serverRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
 			for(int i = 0; i < serverRequests.size(); i++) {
-				Object requestData = serverRequests.get(i);
-				JSONObject singleRequest = (JSONObject) requestData;
+				JSONObject singleRequest = jsonHandler.getAttributeAsJsonObject(serverRequests.get(i));
 				if(carState != null && !StatusTypes.valueOf(singleRequest.get("CarState").toString()).equals(carState)) {
 					singleRequest.replace("CarState", carState.toString());
 					updated = true;
@@ -281,7 +284,7 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				}
 			}
-			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
 			} catch (IOException e) {
@@ -300,12 +303,10 @@ public class ServerMessageHandler implements Runnable{
 			}
 		}
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader("src/main/resources/Server/requests_Server_" + this.id + ".json"))
+		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
-			Object jsonContent = jParser.parse(reader);
-			JSONObject requestsData = (JSONObject) jsonContent;
-			Object serverRequestDataContent = requestsData.get("ServerRequests");
-			JSONArray serverRequests = (JSONArray) serverRequestDataContent;
+			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+			JSONArray serverRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
 			for(int i = 0; i < serverRequests.size(); i++) {
 				Object requestData = serverRequests.get(i);
 				JSONObject singleRequest = (JSONObject) requestData;
@@ -314,7 +315,7 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				}
 			}
-			try (FileWriter file = new FileWriter("src/main/resources/Server/requests_Server_" + this.id + ".json")) {
+			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
 			} catch (IOException e) {

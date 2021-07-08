@@ -233,8 +233,7 @@ public class Client implements Runnable {
 	
 	//handle BOOKING & ACKNOWLEDGMENT & ERROR for bookingRequest
 	private Message analyzeAndGetResponse(Message msg) {
-		String statusMessage = msg.getStatusMessage();
-		Message response = new Message();
+		Message response = null;
 		try {
 			switch(msg.getStatus()) {
 				case BOOKING:

@@ -1,6 +1,5 @@
 package CarService;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -21,17 +20,18 @@ public class CarBroker implements Runnable {
 
 	//Attribute
 	private static final Logger logger = LogManager.getRootLogger();
+	private final MessageFactory msgFactory;
 	private static DatagramSocket socket;
     private boolean online;
-    private byte[] buffer = new byte[1024];
     private int carBrokerPort;
-    private CarPool pool;
+    private final CarPool pool;
     private String brokerName;
     private boolean wasAbortBefore;
     private InetAddress localAddress;
     
     public CarBroker() {
     	logger.trace("Creating CarBroker...");
+    	this.msgFactory = new MessageFactory();
 		this.pool = new CarPool();
 		this.pool.initialize();
 		this.wasAbortBefore = false;
@@ -40,20 +40,20 @@ public class CarBroker implements Runnable {
     
     public void run() {
         online = true;
+		byte[] buffer = new byte[1024];
         while (online) {
         	try {
-        		buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
-	            logger.info("CarBroker received: <"+ received.toString() +">");
+	            logger.info(brokerName + " received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
 					dp = new DatagramPacket(buffer, buffer.length, address, port);
-					logger.trace("CarBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+					logger.trace(brokerName + " sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
 		            socket.send(dp);
 				}
         	} catch (IOException e) {
@@ -71,67 +71,55 @@ public class CarBroker implements Runnable {
 	 */
 	private Message analyzeAndGetResponse(Message msg) {
 		String statusMessage = msg.getStatusMessage();
-		Message response = new Message();
+		Message response = null;
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all cars
-					Message res = new Message(StatusTypes.INFOCARS, this.localAddress, this.carBrokerPort, msg.getBookingID(), pool.getInfoOfCars());
-					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
-					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
-					socket.send(packetCar);
-					response = null;
+					response = msgFactory.buildInfoCars(msg.getBookingID(), pool.getInfoOfCars(), localAddress, carBrokerPort);
+					logger.trace("<" + brokerName + "> sent: <" + response.toString() + ">");
 					break;
 				case PREPARE:
 					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, this.localAddress, this.carBrokerPort, msg.getBookingID(), "CarIsFree");
-						//write to stable store
-						//############################
+						response = msgFactory.buildReady(msg.getBookingID(), "CarIsFree", localAddress, carBrokerPort);
 					} else {
-						response = new Message(StatusTypes.ABORT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "CarIsAlreadyBlocked");
+						response = msgFactory.buildAbort(msg.getBookingID(), "CarIsAlreadyBlocked", localAddress, carBrokerPort);
 						this.wasAbortBefore = true;
-						//write to stable store
-						//############################
 					}
 					break;
 				case COMMIT:
-					//proceed with booking of car
-					//write to stable store
 					this.pool.commitRequestOfBookingID(msg.getBookingID());
-					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenBooked");
+					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenBooked", localAddress, carBrokerPort);
 					break;
 				case ROLLBACK:
-					//cancel booking of car
-					//write to stable store
-					//############################
 					if(!this.wasAbortBefore) {
 						this.pool.roolbackRequestOfBookingID(msg.getBookingID());
 					} else {
 						this.wasAbortBefore = false;
 						this.pool.removeRequestFromList(msg.getBookingID());
 					}
-					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
+					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(StatusTypes.TESTING, this.localAddress, this.carBrokerPort, msg.getBookingID(), "OK");
+						response = msgFactory.buildTest(msg.getBookingID(), "OK", localAddress, carBrokerPort);
 					}
 					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:
 					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(StatusTypes.CONNECTIONTEST, this.localAddress, this.carBrokerPort, msg.getBookingID(), "HiFromCarBroker");
+						response = msgFactory.buildConnectionTest(msg.getBookingID(), "HiFromCarBroker", this.localAddress, this.carBrokerPort);
 					}
 					break;
 				case INQUIRE:
 					break;
-				default:
-					response = new Message(StatusTypes.ERROR, this.localAddress, this.carBrokerPort, null, "ERROR ID_FormatException");
+				case THROWAWAY:
 					break;
-			} 
+				default:
+					response = msgFactory.buildError(null,  "ERROR ID_FormatException", this.localAddress, this.carBrokerPort);
+					break;
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -147,14 +135,10 @@ public class CarBroker implements Runnable {
 			this.brokerName = configData.get("serviceName").toString();
 			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
 			this.carBrokerPort = Integer.parseInt(configData.get("port").toString());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
-		logger.info("Starting CarBroker on port <" + carBrokerPort + "> ...");
+		logger.info("Starting " + brokerName + " on port <" + carBrokerPort + "> ...");
 		try {
 			socket = new DatagramSocket(carBrokerPort);
 		} catch (SocketException e) {
@@ -162,15 +146,14 @@ public class CarBroker implements Runnable {
 		}
 		ArrayList<CarRequest> oldRequests = pool.getRequests();
 		DatagramPacket packet;
-		byte[] dataBytes;
+		CarRequest singleOldRequest;
 		if(oldRequests.size() > 0) {
 			for(int i = 0; i < oldRequests.size(); i++) {
-				CarRequest singleOldRequest = oldRequests.get(i);
-				Message msg = new Message(singleOldRequest.getState(), singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort(), singleOldRequest.getId(), "");
-				dataBytes = msg.toString().getBytes();
-				packet = new DatagramPacket(dataBytes, dataBytes.length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
+				singleOldRequest = oldRequests.get(i);
+				Message msg = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", localAddress, carBrokerPort);
+				packet = new DatagramPacket(msg.getAsBytes(), msg.getAsBytes().length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
 				try {
-					this.socket.send(packet);
+					socket.send(packet);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

@@ -34,10 +34,6 @@ public class Message {
 		this.statusMessage = statusMessage.replace(" ", "_");
 	}
 
-	public Message() {
-
-	}
-
 	public Message(String msg, InetAddress pSenderAddress, int pSenderPort) {
 		this.senderAddress = pSenderAddress;
 		this.senderPort = pSenderPort;
@@ -100,7 +96,11 @@ public class Message {
 		}
 		return status + " " + senderAddress + " " + senderPort + " " + bookingID + " " + statusMessage;
 	}
-	
+
+	public byte[] getAsBytes() {
+		return this.toString().getBytes();
+	}
+
 	public boolean validate() {
 		if(status != StatusTypes.ERROR) {
 			return true;
