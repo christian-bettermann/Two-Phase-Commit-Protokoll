@@ -6,7 +6,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
@@ -17,8 +16,8 @@ import java.util.Date;
 
 public class CarPool {
     //Attribute
-    private ArrayList<Car> carList;
-    private ArrayList<CarRequest> requestList;
+    private final ArrayList<Car> carList;
+    private final ArrayList<CarRequest> requestList;
 
     public CarPool() {
         this.carList = new ArrayList<Car>();
@@ -55,11 +54,7 @@ public class CarPool {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
         removeRequestFromList(bookingID);

@@ -6,8 +6,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,8 +15,8 @@ import java.util.Date;
 
 public class Hotel {
     //Attribute
-    private ArrayList<Room> roomList;
-    private ArrayList<RoomRequest> requestList;
+    private final ArrayList<Room> roomList;
+    private final ArrayList<RoomRequest> requestList;
 
     public Hotel() {
         this.roomList = new ArrayList<Room>();
@@ -55,11 +53,7 @@ public class Hotel {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
         this.removeRequestFromList(bookingId);
@@ -110,11 +104,7 @@ public class Hotel {
                 }
                 this.roomList.add(singleRoom);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
         try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
@@ -136,11 +126,7 @@ public class Hotel {
                 );
                 this.requestList.add(singleRoomRequest);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -187,11 +173,7 @@ public class Hotel {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }
@@ -224,11 +206,7 @@ public class Hotel {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }

@@ -19,14 +19,14 @@ import org.json.simple.parser.ParseException;
 
 public class ServerMessageHandler implements Runnable{
 	//Attribute
-	private int id;
+	private final int id;
 	private static final Logger logger = LogManager.getRootLogger();
-	private DatagramSocket socket;
-	private BlockingQueue<Message> incomingMessages;
-	private String name;
+	private final DatagramSocket socket;
+	private final BlockingQueue<Message> incomingMessages;
+	private final String name;
 	private Boolean online;
-	private Server server;
-	private ArrayList<ServerRequest> requestList;
+	private final Server server;
+	private final ArrayList<ServerRequest> requestList;
 	
 	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
@@ -191,6 +191,7 @@ public class ServerMessageHandler implements Runnable{
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
+							logger.info("FINISHED 2PC");
 						}
 					}
 					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
@@ -198,6 +199,7 @@ public class ServerMessageHandler implements Runnable{
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
+							logger.info("FINISHED 2PC");
 						}
 					}
 					response = null;
