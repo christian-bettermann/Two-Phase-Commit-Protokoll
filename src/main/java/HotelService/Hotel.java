@@ -1,13 +1,12 @@
 package HotelService;
 
+import JsonUtility.JsonHandler;
 import Message.StatusTypes;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -17,12 +16,18 @@ import java.util.Date;
 
 public class Hotel {
     //Attribute
-    private ArrayList<Room> roomList;
-    private ArrayList<RoomRequest> requestList;
+    private JsonHandler jsonHandler;
+    private final String dataFilePath;
+    private final String requestsFilePath;
+    private final ArrayList<Room> roomList;
+    private final ArrayList<RoomRequest> requestList;
 
     public Hotel() {
-        this.roomList = new ArrayList<Room>();
-        this.requestList = new ArrayList<RoomRequest>();
+        this.dataFilePath = "src/main/resources/HotelService/data.json";
+        this.requestsFilePath = "src/main/resources/HotelService/requests.json";
+        this.roomList = new ArrayList<>();
+        this.requestList = new ArrayList<>();
+        this.jsonHandler = new JsonHandler();
     }
 
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
@@ -34,32 +39,24 @@ public class Hotel {
     public void commitRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
-            Object jsonContent = jParser.parse(reader);
-            JSONObject roomData = (JSONObject) jsonContent;
-            Object roomDataContent = roomData.get("rooms");
-            JSONArray roomJsonArray = (JSONArray) roomDataContent;
-            Object singleRoomObject = roomJsonArray.get(request.getRoomId() - 1);
-            JSONObject singleRoom = (JSONObject) singleRoomObject;
-            Object reservationsObject = singleRoom.get("Reservations");
-            JSONArray reservations = (JSONArray) reservationsObject;
+            JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
+            JSONObject singleRoom = jsonHandler.getAttributeAsJsonObject( rooms.get(request.getRoomId() - 1));
+            JSONArray reservations = jsonHandler.getAttributeAsJsonArray(singleRoom.get("Reservations"));
             JSONObject reservation = new JSONObject();
             reservation.put("Id", request.getId());
             reservation.put("StartTime", request.getStartTime().getTime());
             reservation.put("EndTime", request.getEndTime().getTime());
             reservations.add(reservation);
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/data.json")) {
-                file.write(roomData.toJSONString());
+            try (FileWriter file = new FileWriter(dataFilePath)) {
+                file.write(roomsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
         this.removeRequestFromList(bookingId);
@@ -74,7 +71,7 @@ public class Hotel {
     private RoomRequest getRequest(String bookingId) {
         RoomRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -84,48 +81,36 @@ public class Hotel {
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
-            Object jsonContent = jParser.parse(reader);
-            JSONObject roomData = (JSONObject) jsonContent;
-            Object roomDataContent = roomData.get("rooms");
-            JSONArray roomJsonArray = (JSONArray) roomDataContent;
-            for (int i = 0; i < roomJsonArray.size(); i++) {
-                Object singleRoomData = roomJsonArray.get(i);
-                JSONObject roomInfo = (JSONObject) singleRoomData;
+            JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
+            for (int i = 0; i < rooms.size(); i++) {
+                JSONObject roomInfo = jsonHandler.getAttributeAsJsonObject(rooms.get(i));
                 Room singleRoom = new Room(Integer.parseInt(roomInfo.get("Id").toString()),
                         Integer.parseInt(roomInfo.get("Beds").toString()),
                         BedTypes.valueOf(roomInfo.get("BedType").toString()),
                         Integer.parseInt(roomInfo.get("Bath").toString()),
                         RoomTypes.valueOf(roomInfo.get("Type").toString())
                 );
-                Object reservationData = roomInfo.get("Reservations");
-                JSONArray reservationJsonArray = (JSONArray) reservationData;
+                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(roomInfo.get("Reservations"));
                 for(int j = 0; j < reservationJsonArray.size(); j++) {
-                    Object singleBooking = reservationJsonArray.get(j);
-                    JSONObject singleBookingData = (JSONObject) singleBooking;
+                    JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
                     String startTime = singleBookingData.get("StartTime").toString();
                     String endTime = singleBookingData.get("EndTime").toString();
                     singleRoom.bookRoom(new Date(Long.parseLong(startTime)), new Date(Long.parseLong(endTime)));
                 }
                 this.roomList.add(singleRoom);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
-            Object jsonContent = jParser.parse(reader);
-            JSONObject requestsData = (JSONObject) jsonContent;
-            Object roomRequestDataContent = requestsData.get("RoomRequests");
-            JSONArray requests = (JSONArray) roomRequestDataContent;
+            JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
             for (int i = 0; i < requests.size(); i++) {
-                Object singleRoomRequestData = requests.get(i);
-                JSONObject requestInfo = (JSONObject) singleRoomRequestData;
+                JSONObject requestInfo = jsonHandler.getAttributeAsJsonObject(requests.get(i));
                 RoomRequest singleRoomRequest = new RoomRequest(InetAddress.getByName(requestInfo.get("Target_IP").toString()),
                         Integer.parseInt(requestInfo.get("Target_Port").toString()),
                         requestInfo.get("BookingId").toString(),
@@ -136,11 +121,7 @@ public class Hotel {
                 );
                 this.requestList.add(singleRoomRequest);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
     }
@@ -160,12 +141,10 @@ public class Hotel {
 
     public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
-            Object jsonContent = jParser.parse(reader);
-            JSONObject requestsData = (JSONObject) jsonContent;
-            Object carRequestDataContent = requestsData.get("RoomRequests");
-            JSONArray roomRequests = (JSONArray) carRequestDataContent;
+            JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray roomRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
             JSONObject roomRequest = new JSONObject();
             roomRequest.put("Target_IP", target.toString().replace("/", ""));
             roomRequest.put("Target_Port", port);
@@ -181,54 +160,43 @@ public class Hotel {
                 roomRequest.put("State", StatusTypes.ABORT.toString());
             }
             roomRequests.add(roomRequest);
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }
 
     public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 this.requestList.remove(i);
                 break;
             }
         }
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
-            Object jsonContent = jParser.parse(reader);
-            JSONObject requestsData = (JSONObject) jsonContent;
-            Object carRequestDataContent = requestsData.get("RoomRequests");
-            JSONArray roomRequests = (JSONArray) carRequestDataContent;
+            JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray roomRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
             for(int i = 0; i < roomRequests.size(); i++) {
-                Object requestData = roomRequests.get(i);
-                JSONObject singleRequest = (JSONObject) requestData;
+                JSONObject singleRequest = jsonHandler.getAttributeAsJsonObject(roomRequests.get(i));
                 if(singleRequest.get("BookingId").equals(bookingId)) {
                     roomRequests.remove(i);
                     break;
                 }
             }
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }

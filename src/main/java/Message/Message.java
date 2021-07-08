@@ -2,7 +2,6 @@ package Message;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -32,10 +31,6 @@ public class Message {
 		this.senderPort = senderPort; 
 		this.bookingID = bookingID; 
 		this.statusMessage = statusMessage.replace(" ", "_");
-	}
-
-	public Message() {
-
 	}
 
 	public Message(String msg, InetAddress pSenderAddress, int pSenderPort) {
@@ -100,7 +95,11 @@ public class Message {
 		}
 		return status + " " + senderAddress + " " + senderPort + " " + bookingID + " " + statusMessage;
 	}
-	
+
+	public byte[] getAsBytes() {
+		return this.toString().getBytes();
+	}
+
 	public boolean validate() {
 		if(status != StatusTypes.ERROR) {
 			return true;

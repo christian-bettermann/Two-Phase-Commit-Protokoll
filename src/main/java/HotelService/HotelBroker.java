@@ -1,6 +1,5 @@
 package HotelService;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -9,7 +8,6 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
-
 import Message.*;
 import Request.RoomRequest;
 import org.apache.logging.log4j.LogManager;
@@ -23,18 +21,22 @@ public class HotelBroker implements Runnable {
 
 	//Attribute
 	private static final Logger logger = LogManager.getRootLogger();
+	private final MessageFactory msgFactory;
     private static DatagramSocket socket;
     private boolean online;
-    private byte[] buffer;
-    private Hotel hotel;
+	private byte[] buffer;
+    private final Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
+    private boolean wasAbortBefore;
     int hotelBrokerPort;
     
     public HotelBroker() {
     	logger.trace("Creating HotelBroker...");
+    	this.msgFactory = new MessageFactory();
     	this.hotel = new Hotel();
 		this.hotel.initialize();
+		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -42,18 +44,18 @@ public class HotelBroker implements Runnable {
         online = true;
         while (online) {
         	try {
-        		buffer = new byte[1024];
+				buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
-	            logger.info("HotelBroker received: <"+ received.toString() +">");
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
+	            logger.info(brokerName + " received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
 					dp = new DatagramPacket(buffer, buffer.length, address, port);
-					logger.trace("HotelBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+					logger.trace(brokerName + " sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
 		            socket.send(dp);
 				}
         	} catch (IOException e) {
@@ -71,58 +73,49 @@ public class HotelBroker implements Runnable {
 	 */
 	private Message analyzeAndGetResponse(Message msg) {
 		String statusMessage = msg.getStatusMessage();
-		Message response = new Message();
+		Message response = null;
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
 					//answer with a list oft all rooms
-					Message res= new Message(StatusTypes.INFOROOMS, this.localAddress, this.hotelBrokerPort,  msg.getBookingID(), hotel.getInfoOfRooms());
-					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
-					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
-					socket.send(packetHotel);
-					response = null;
+					response= msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
+					logger.trace("<" + brokerName + "> sent: <"+ response.toString() + ">");
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = new Message(StatusTypes.READY, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsFree");
-
-						//write to stable store
-						//#################################
+						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", localAddress, hotelBrokerPort);
 					} else {
-						response = new Message(StatusTypes.ABORT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsAlreadyBlocked");
-						//write to stable store
-						//#################################
+						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
+						this.wasAbortBefore = true;
 					}
 					break;
 				case COMMIT:
-					//proceed with booking of room
-					//write to stable store
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
-					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "ReservationHasBeenBooked");
+					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
 					break;
 				case ROLLBACK:
-					//cancel booking of room
-					//write to stable store
-					//#################################
-					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
-					//sending ACKNOWLEDGMENT to server
-					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
+					if(!this.wasAbortBefore) {
+						this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					} else {
+						this.wasAbortBefore = false;
+						this.hotel.removeRequestFromList(msg.getBookingID());
+					}
+					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
 				case TESTING:
 					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = new Message(StatusTypes.TESTING, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "OK");
+						response = msgFactory.buildTest(msg.getBookingID(),"OK", localAddress, hotelBrokerPort);
 					}
 					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:
 					if(statusMessage.equals("InitialMessageRequest")) {
-						response = new Message(StatusTypes.CONNECTIONTEST, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HiFromHotel");
+						response = msgFactory.buildConnectionTest(msg.getBookingID(), "HiFromHotel", localAddress, hotelBrokerPort);
 					}
 					break;	
 				default:
-					response = new Message(StatusTypes.ERROR, this.localAddress, this.hotelBrokerPort, null, "ERROR ID_FormatException");
+					response = msgFactory.buildError(null, "ERROR ID_FormatException", localAddress, hotelBrokerPort);
 					break;
 			}
 		} catch (Exception e) {
@@ -140,14 +133,10 @@ public class HotelBroker implements Runnable {
 			this.brokerName = configData.get("serviceName").toString();
 			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
 			this.hotelBrokerPort = Integer.parseInt(configData.get("port").toString());
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
+		} catch (ParseException | IOException e) {
 			e.printStackTrace();
 		}
-		logger.info("Starting HotelBroker on port <" + hotelBrokerPort + "> ...");
+		logger.info("Starting " + brokerName + " on port <" + hotelBrokerPort + "> ...");
 		try {
 			socket = new DatagramSocket(hotelBrokerPort);
 		} catch (SocketException e) {
@@ -155,15 +144,14 @@ public class HotelBroker implements Runnable {
 		}
 		ArrayList<RoomRequest> oldRequests = hotel.getRequests();
 		DatagramPacket packet;
-		byte[] dataBytes;
+		RoomRequest singleOldRequest;
 		if(oldRequests.size() > 0) {
 			for(int i = 0; i < oldRequests.size(); i++) {
-				RoomRequest singleOldRequest = oldRequests.get(i);
-				Message msg = new Message(singleOldRequest.getState(), singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort(), singleOldRequest.getIdAsString(), "");
-				dataBytes = msg.toString().getBytes();
-				packet = new DatagramPacket(dataBytes, dataBytes.length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
+				singleOldRequest = oldRequests.get(i);
+				Message msg = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", localAddress, hotelBrokerPort);
+				packet = new DatagramPacket(msg.getAsBytes(), msg.getAsBytes().length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
 				try {
-					this.socket.send(packet);
+					socket.send(packet);
 				} catch (IOException e) {
 					e.printStackTrace();
 				}

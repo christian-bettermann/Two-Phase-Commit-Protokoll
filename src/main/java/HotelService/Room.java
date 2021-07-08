@@ -23,21 +23,21 @@ public class Room {
         this.reservationList = new ArrayList<BlockedTimeZone>();
     }
 
-    public boolean checkAndBookIfFree(Date startTime, Date EndTime) {
-        boolean free = checkRoomIsFreeInTimeZone(startTime);
+    public boolean checkAndBookIfFree(Date startTime, Date endTime) {
+        boolean free = checkRoomIsFreeInTimeZone(startTime, endTime);
         if(free) {
-            bookRoom(startTime, EndTime);
+            bookRoom(startTime, endTime);
         }
         return free;
     }
 
-    private boolean checkRoomIsFreeInTimeZone(Date startTime) {
+    private boolean checkRoomIsFreeInTimeZone(Date startTime, Date endTime) {
         boolean free;
         int actuallyReservationAmount = this.reservationList.size();
         int ctr = 0;
         if(actuallyReservationAmount >= 1) {
             for(int i = 0; i < actuallyReservationAmount; i++) {
-                if(reservationList.get(i).getEndTime().before(startTime)) {
+                if(reservationList.get(i).getEndTime().before(startTime) && reservationList.get(i).getStartTime().after(endTime)) {
                     ctr++;
                 }
             }
