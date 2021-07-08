@@ -74,7 +74,7 @@ public class CarPool {
     private CarRequest getRequest(String bookingId) {
         CarRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -187,11 +187,7 @@ public class CarPool {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }
@@ -224,11 +220,7 @@ public class CarPool {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
     }

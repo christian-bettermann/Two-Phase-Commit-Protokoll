@@ -74,7 +74,7 @@ public class Hotel {
     private RoomRequest getRequest(String bookingId) {
         RoomRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 request = this.requestList.get(i);
                 break;
             }
@@ -106,7 +106,7 @@ public class Hotel {
                     JSONObject singleBookingData = (JSONObject) singleBooking;
                     String startTime = singleBookingData.get("StartTime").toString();
                     String endTime = singleBookingData.get("EndTime").toString();
-                    singleRoom.bookRoom(new Date(Integer.parseInt(startTime)), new Date(Integer.parseInt(endTime)));
+                    singleRoom.bookRoom(new Date(Long.parseLong(startTime)), new Date(Long.parseLong(endTime)));
                 }
                 this.roomList.add(singleRoom);
             }
@@ -198,7 +198,7 @@ public class Hotel {
 
     public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
-            if(this.requestList.get(i).getIdAsString().equals(bookingId)) {
+            if(this.requestList.get(i).getId().equals(bookingId)) {
                 this.requestList.remove(i);
                 break;
             }

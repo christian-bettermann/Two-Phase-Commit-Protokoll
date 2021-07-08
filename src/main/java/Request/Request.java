@@ -26,11 +26,6 @@ public abstract class Request {
         return id;
     }
 
-    public String getIdAsString() {
-        String result = "" + this.id + "";
-        return result;
-    }
-
     public Date getStartTime() {
         return startTime;
     }

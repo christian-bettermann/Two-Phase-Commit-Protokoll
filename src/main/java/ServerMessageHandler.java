@@ -1,8 +1,6 @@
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.lang.reflect.Array;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
@@ -11,7 +9,6 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import Message.*;
-import Request.CarRequest;
 import Request.ServerRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -110,15 +107,16 @@ public class ServerMessageHandler implements Runnable{
 						logger.error("CARBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.READY, null);
 						if(this.getRequest(msg.getBookingID()).bothReady()) {
+							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							Message answerForHotelBroker = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
 							DatagramPacket packet = new DatagramPacket(answerForHotelBroker.toString().getBytes(), answerForHotelBroker.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 							logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 							socket.send(packet);
 							response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
-						} else if(this.getRequest(msg.getBookingID()).getCarBrokerState().equals(StatusTypes.ABORT) && this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
+						} else if(this.getRequest(msg.getBookingID()).getHotelBrokerState().equals(StatusTypes.ABORT) && this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
-							Message answerForHotelBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
-							DatagramPacket packet = new DatagramPacket(answerForHotelBroker.toString().getBytes(), answerForHotelBroker.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+							Message answerForCarBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
+							DatagramPacket packet = new DatagramPacket(answerForCarBroker.toString().getBytes(), answerForCarBroker.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 							logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 							socket.send(packet);
 							response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
@@ -131,12 +129,13 @@ public class ServerMessageHandler implements Runnable{
 						logger.error("HOTELBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY);
 						if(this.getRequest(msg.getBookingID()).bothReady()) {
-							Message answerForCarBroker = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
-							DatagramPacket packet = new DatagramPacket(answerForCarBroker.toString().getBytes(), answerForCarBroker.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+							this.getRequest(msg.getBookingID()).resetMessageCounter();
+							Message answerForHotelBroker = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+							DatagramPacket packet = new DatagramPacket(answerForHotelBroker.toString().getBytes(), answerForHotelBroker.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
 							logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 							socket.send(packet);
 							response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
-						} else if(this.getRequest(msg.getBookingID()).getHotelBrokerState().equals(StatusTypes.ABORT) && this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
+						} else if(this.getRequest(msg.getBookingID()).getCarBrokerState().equals(StatusTypes.ABORT) && this.getRequest(msg.getBookingID()).getMessageCounter() == 2) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							Message answerForCarBroker = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanRollback");
 							DatagramPacket packet = new DatagramPacket(answerForCarBroker.toString().getBytes(), answerForCarBroker.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
@@ -180,15 +179,17 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case ACKNOWLEDGMENT:
-					if(msg.getSenderAddress() == server.getBroker()[0].getAddress() && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ACKNOWLEDGMENT, null);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
+							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
 						}
 					}
-					if(msg.getSenderAddress() == server.getBroker()[1].getAddress() && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ACKNOWLEDGMENT);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
+							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
 						}
 					}
@@ -294,7 +295,7 @@ public class ServerMessageHandler implements Runnable{
 
 	public void removeRequestFromList(String bookingId) {
 		for(int i = 0; i < requestList.size(); i++) {
-			if(this.requestList.get(i).getId().equals( bookingId)) {
+			if(this.requestList.get(i).getId().equals(bookingId)) {
 				this.requestList.remove(i);
 				break;
 			}

@@ -159,7 +159,7 @@ public class HotelBroker implements Runnable {
 		if(oldRequests.size() > 0) {
 			for(int i = 0; i < oldRequests.size(); i++) {
 				RoomRequest singleOldRequest = oldRequests.get(i);
-				Message msg = new Message(singleOldRequest.getState(), singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort(), singleOldRequest.getIdAsString(), "");
+				Message msg = new Message(singleOldRequest.getState(), singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort(), singleOldRequest.getId(), "");
 				dataBytes = msg.toString().getBytes();
 				packet = new DatagramPacket(dataBytes, dataBytes.length, singleOldRequest.getTargetIp(), singleOldRequest.getTargetPort());
 				try {
