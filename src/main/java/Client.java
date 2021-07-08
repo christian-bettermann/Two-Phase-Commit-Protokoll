@@ -213,12 +213,12 @@ public class Client implements Runnable {
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
-	            logger.info("HotelBroker received: <"+ received.toString() +">");
+	            logger.info("Client received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
 					dp = new DatagramPacket(buffer, buffer.length, address, port);
-					logger.trace("HotelBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+					logger.trace("Client sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
 		            socket.send(dp);
 				}
         	} catch (SocketTimeoutException e) {
