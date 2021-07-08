@@ -35,12 +35,10 @@ public class ServerMessageHandler implements Runnable{
 		this.name = name;
 		this.socket = socket;
 		this.server = server;
-		this.requestList = new ArrayList<ServerRequest>();
+		this.requestList = new ArrayList<>();
 	}
 	
 	public void run() {
-		//get messages from queue
-		//handle messages
 		logger.info("Starting <" + name + "> for port <" + socket.getLocalPort() + ">...");
 		online = true;
 		while (online) {
@@ -53,7 +51,6 @@ public class ServerMessageHandler implements Runnable{
 					logger.trace("<" + name + "> sent: <"+ new String(packet.getData(), 0, packet.getLength()) +">");
 					socket.send(packet);
 				}
-				
 			} catch (InterruptedException | IOException e) {
 				e.printStackTrace();
 			}
@@ -73,12 +70,10 @@ public class ServerMessageHandler implements Runnable{
 					DatagramPacket packetCar = new DatagramPacket(infoMsgCar.toString().getBytes(), infoMsgCar.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
 					logger.trace("<" + name + "> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
 					socket.send(packetCar);
-					
 					Message infoMsgHotel = new Message(StatusTypes.INFO, msg.getSenderAddress(), msg.getSenderPort(), "0", "GetInitialInfo");
 					DatagramPacket packetHotel = new DatagramPacket(infoMsgHotel.toString().getBytes(), infoMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 					logger.trace("<" + name + "> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
-
 					response = null;
 					break;
 				case BOOKING:
@@ -87,13 +82,10 @@ public class ServerMessageHandler implements Runnable{
 						String timestamp = String.valueOf(new Date().getTime());
 						String newBookingID = server.getName()+ "_" + timestamp + "_" + uniqueID;
 						response = new Message(StatusTypes.BOOKING, InetAddress.getLocalHost(), socket.getLocalPort(), newBookingID, msg.getStatusMessage());
-						
-						//send booking to brokers
 						Message prepareMsgCar = new Message(StatusTypes.PREPARE, InetAddress.getLocalHost(), socket.getLocalPort(), newBookingID, msg.getStatusMessage());
 						DatagramPacket preparePacketCar = new DatagramPacket(prepareMsgCar.toString().getBytes(), prepareMsgCar.toString().getBytes().length, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
 						logger.trace("<" + name + "> sent: <"+ new String(preparePacketCar.getData(), 0, preparePacketCar.getLength()) +">");
 						socket.send(preparePacketCar);
-						
 						Message prepareMsgHotel = new Message(StatusTypes.PREPARE, InetAddress.getLocalHost(), socket.getLocalPort(), newBookingID, msg.getStatusMessage());
 						DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
 						logger.trace("<" + name + "> sent: <"+ new String(preparePacketHotel.getData(), 0, preparePacketHotel.getLength()) +">");
@@ -127,7 +119,6 @@ public class ServerMessageHandler implements Runnable{
 							response = null;
 						}
 					}
-
 					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						logger.info("HOTELBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY);
@@ -168,7 +159,6 @@ public class ServerMessageHandler implements Runnable{
 					} else {
 						response = null;
 					}
-
 					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
 						logger.info("HOTELBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ABORT);

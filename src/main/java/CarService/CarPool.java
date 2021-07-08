@@ -6,7 +6,6 @@ import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 import org.json.simple.parser.ParseException;
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
@@ -20,8 +19,8 @@ public class CarPool {
     private final ArrayList<CarRequest> requestList;
 
     public CarPool() {
-        this.carList = new ArrayList<Car>();
-        this.requestList = new ArrayList<CarRequest>();
+        this.carList = new ArrayList<>();
+        this.requestList = new ArrayList<>();
     }
 
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
@@ -77,7 +76,6 @@ public class CarPool {
         return request;
     }
 
-
     public void initialize() {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
@@ -105,11 +103,7 @@ public class CarPool {
                 }
                 this.carList.add(singleCar);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
         try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
@@ -131,11 +125,7 @@ public class CarPool {
                 );
                 this.requestList.add(singleCarRequest);
             }
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (ParseException e) {
+        } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
     }
