@@ -28,12 +28,14 @@ public class CarBroker implements Runnable {
     private int carBrokerPort;
     private CarPool pool;
     private String brokerName;
+    private boolean wasAbortBefore;
     private InetAddress localAddress;
     
     public CarBroker() {
     	logger.trace("Creating CarBroker...");
 		this.pool = new CarPool();
 		this.pool.initialize();
+		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -88,6 +90,7 @@ public class CarBroker implements Runnable {
 						//############################
 					} else {
 						response = new Message(StatusTypes.ABORT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "CarIsAlreadyBlocked");
+						this.wasAbortBefore = true;
 						//write to stable store
 						//############################
 					}
@@ -103,7 +106,12 @@ public class CarBroker implements Runnable {
 					//cancel booking of car
 					//write to stable store
 					//############################
-					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					if(!this.wasAbortBefore) {
+						this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					} else {
+						this.wasAbortBefore = false;
+						this.pool.removeRequestFromList(msg.getBookingID());
+					}
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.carBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
 					break;

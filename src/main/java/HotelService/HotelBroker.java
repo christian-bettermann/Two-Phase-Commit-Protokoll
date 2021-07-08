@@ -29,12 +29,14 @@ public class HotelBroker implements Runnable {
     private Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
+    private boolean wasAbortBefore;
     int hotelBrokerPort;
     
     public HotelBroker() {
     	logger.trace("Creating HotelBroker...");
     	this.hotel = new Hotel();
 		this.hotel.initialize();
+		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -90,6 +92,7 @@ public class HotelBroker implements Runnable {
 						//#################################
 					} else {
 						response = new Message(StatusTypes.ABORT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "HotelRoomIsAlreadyBlocked");
+						this.wasAbortBefore = true;
 						//write to stable store
 						//#################################
 					}
@@ -105,7 +108,12 @@ public class HotelBroker implements Runnable {
 					//cancel booking of room
 					//write to stable store
 					//#################################
-					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					if(!this.wasAbortBefore) {
+						this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					} else {
+						this.wasAbortBefore = false;
+						this.hotel.removeRequestFromList(msg.getBookingID());
+					}
 					//sending ACKNOWLEDGMENT to server
 					response = new Message(StatusTypes.ACKNOWLEDGMENT, this.localAddress, this.hotelBrokerPort, msg.getBookingID(), "ReservationHasBeenDeleted");
 					break;
