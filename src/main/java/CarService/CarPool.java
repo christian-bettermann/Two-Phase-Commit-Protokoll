@@ -17,11 +17,15 @@ import java.util.Date;
 public class CarPool {
     //Attribute
     private final JsonHandler jsonHandler;
+    private final String dataFilePath;
+    private final String requestsFilePath;
     private final ArrayList<Car> carList;
     private final ArrayList<CarRequest> requestList;
 
     public CarPool() {
         this.carList = new ArrayList<>();
+        this.dataFilePath = "src/main/resources/CarService/data.json";
+        this.requestsFilePath = "src/main/resources/CarService/requests.json";
         this.requestList = new ArrayList<>();
         this.jsonHandler = new JsonHandler();
     }
@@ -35,7 +39,7 @@ public class CarPool {
     public void commitRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
             JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
@@ -46,7 +50,7 @@ public class CarPool {
             reservation.put("StartTime", request.getStartTime().getTime());
             reservation.put("EndTime", request.getEndTime().getTime());
             reservations.add(reservation);
-            try (FileWriter file = new FileWriter("src/main/resources/CarService/data.json")) {
+            try (FileWriter file = new FileWriter(dataFilePath)) {
                 file.write(carsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -77,7 +81,7 @@ public class CarPool {
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/CarService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
             JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
@@ -100,7 +104,7 @@ public class CarPool {
         } catch (IOException | ParseException e) {
             e.printStackTrace();
         }
-        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
@@ -136,7 +140,7 @@ public class CarPool {
 
     public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray carRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
@@ -155,7 +159,7 @@ public class CarPool {
                 this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
             }
             carRequests.add(carRequest);
-            try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -174,7 +178,7 @@ public class CarPool {
             }
         }
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/CarService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray carRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
@@ -185,7 +189,7 @@ public class CarPool {
                     break;
                 }
             }
-            try (FileWriter file = new FileWriter("src/main/resources/CarService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {

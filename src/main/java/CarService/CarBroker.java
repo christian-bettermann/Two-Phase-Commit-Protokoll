@@ -23,6 +23,7 @@ public class CarBroker implements Runnable {
 	private final MessageFactory msgFactory;
 	private static DatagramSocket socket;
     private boolean online;
+    private byte[] buffer;
     private int carBrokerPort;
     private final CarPool pool;
     private String brokerName;
@@ -40,14 +41,14 @@ public class CarBroker implements Runnable {
     
     public void run() {
         online = true;
-		byte[] buffer = new byte[1024];
         while (online) {
         	try {
+				buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
 	            logger.info(brokerName + " received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {

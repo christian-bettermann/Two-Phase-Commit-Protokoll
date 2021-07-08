@@ -1,6 +1,5 @@
 package HotelService;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -25,6 +24,7 @@ public class HotelBroker implements Runnable {
 	private final MessageFactory msgFactory;
     private static DatagramSocket socket;
     private boolean online;
+	private byte[] buffer;
     private final Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
@@ -42,20 +42,20 @@ public class HotelBroker implements Runnable {
     
     public void run() {
         online = true;
-		byte[] buffer = new byte[1024];
         while (online) {
         	try {
+				buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
-	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
-	            logger.info("HotelBroker received: <"+ received.toString() +">");
+	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
+	            logger.info(brokerName + " received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
 					dp = new DatagramPacket(buffer, buffer.length, address, port);
-					logger.trace("HotelBroker sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
+					logger.trace(brokerName + " sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
 		            socket.send(dp);
 				}
         	} catch (IOException e) {
@@ -79,7 +79,7 @@ public class HotelBroker implements Runnable {
 				case INFO:
 					//answer with a list oft all rooms
 					response= msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
-					logger.trace("<HotelBroker> sent: <"+ response.toString() + ">");
+					logger.trace("<" + brokerName + "> sent: <"+ response.toString() + ">");
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
@@ -136,7 +136,7 @@ public class HotelBroker implements Runnable {
 		} catch (ParseException | IOException e) {
 			e.printStackTrace();
 		}
-		logger.info("Starting HotelBroker on port <" + hotelBrokerPort + "> ...");
+		logger.info("Starting " + brokerName + " on port <" + hotelBrokerPort + "> ...");
 		try {
 			socket = new DatagramSocket(hotelBrokerPort);
 		} catch (SocketException e) {

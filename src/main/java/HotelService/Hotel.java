@@ -17,10 +17,14 @@ import java.util.Date;
 public class Hotel {
     //Attribute
     private JsonHandler jsonHandler;
+    private final String dataFilePath;
+    private final String requestsFilePath;
     private final ArrayList<Room> roomList;
     private final ArrayList<RoomRequest> requestList;
 
     public Hotel() {
+        this.dataFilePath = "src/main/resources/HotelService/data.json";
+        this.requestsFilePath = "src/main/resources/HotelService/requests.json";
         this.roomList = new ArrayList<>();
         this.requestList = new ArrayList<>();
         this.jsonHandler = new JsonHandler();
@@ -35,7 +39,7 @@ public class Hotel {
     public void commitRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
             JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
@@ -46,7 +50,7 @@ public class Hotel {
             reservation.put("StartTime", request.getStartTime().getTime());
             reservation.put("EndTime", request.getEndTime().getTime());
             reservations.add(reservation);
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/data.json")) {
+            try (FileWriter file = new FileWriter(dataFilePath)) {
                 file.write(roomsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -77,7 +81,7 @@ public class Hotel {
 
     public void initialize() {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/data.json"))
+        try (FileReader reader = new FileReader(dataFilePath))
         {
             JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
@@ -101,7 +105,7 @@ public class Hotel {
         } catch (ParseException | IOException e) {
             e.printStackTrace();
         }
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
@@ -137,7 +141,7 @@ public class Hotel {
 
     public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray roomRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
@@ -156,7 +160,7 @@ public class Hotel {
                 roomRequest.put("State", StatusTypes.ABORT.toString());
             }
             roomRequests.add(roomRequest);
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
@@ -175,7 +179,7 @@ public class Hotel {
             }
         }
         JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader("src/main/resources/HotelService/requests.json"))
+        try (FileReader reader = new FileReader(requestsFilePath))
         {
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray roomRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
@@ -186,7 +190,7 @@ public class Hotel {
                     break;
                 }
             }
-            try (FileWriter file = new FileWriter("src/main/resources/HotelService/requests.json")) {
+            try (FileWriter file = new FileWriter(requestsFilePath)) {
                 file.write(requestsData.toJSONString());
                 file.flush();
             } catch (IOException e) {
