@@ -5,8 +5,12 @@ import Calender.BlockedTimeZone;
 import java.util.ArrayList;
 import java.util.Date;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 public class Car {
     //Attribute
+	private static final Logger logger = LogManager.getRootLogger();
 	private final int id;
     private final String manufacturer;
     private final String model;
@@ -37,7 +41,7 @@ public class Car {
         int ctr = 0;
         if(actuallyReservationAmount >= 1) {
             for(int i = 0; i < actuallyReservationAmount; i++) {
-                if(reservationList.get(i).getEndTime().before(startTime) && reservationList.get(i).getStartTime().after(endTime)) {
+                if(!(startTime.before(reservationList.get(i).getEndTime()) && reservationList.get(i).getStartTime().before(endTime))) {
                     ctr++;
                 }
             }
