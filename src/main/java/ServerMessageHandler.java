@@ -272,16 +272,18 @@ public class ServerMessageHandler implements Runnable{
 			JSONArray serverRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
 			for(int i = 0; i < serverRequests.size(); i++) {
 				JSONObject singleRequest = jsonHandler.getAttributeAsJsonObject(serverRequests.get(i));
-				if(carState != null && !StatusTypes.valueOf(singleRequest.get("CarState").toString()).equals(carState)) {
-					singleRequest.replace("CarState", carState.toString());
-					updated = true;
-				}
-				if(hotelState != null && !StatusTypes.valueOf(singleRequest.get("HotelState").toString()).equals(hotelState)) {
-					singleRequest.replace("HotelState", hotelState.toString());
-					updated = true;
-				}
-				if(updated) {
-					break;
+				if(singleRequest.get("BookingId").toString().equals(bookingId)) {
+					if (carState != null && !StatusTypes.valueOf(singleRequest.get("CarState").toString()).equals(carState)) {
+						singleRequest.replace("CarState", carState.toString());
+						updated = true;
+					}
+					if (hotelState != null && !StatusTypes.valueOf(singleRequest.get("HotelState").toString()).equals(hotelState)) {
+						singleRequest.replace("HotelState", hotelState.toString());
+						updated = true;
+					}
+					if (updated) {
+						break;
+					}
 				}
 			}
 			try (FileWriter file = new FileWriter(this.requestFilePath)) {
