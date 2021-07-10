@@ -28,7 +28,6 @@ public class HotelBroker implements Runnable {
     private final Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
-    private boolean wasAbortBefore;
     int hotelBrokerPort;
     
     public HotelBroker() {
@@ -36,7 +35,6 @@ public class HotelBroker implements Runnable {
     	this.msgFactory = new MessageFactory();
     	this.hotel = new Hotel();
 		this.hotel.initialize();
-		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -47,8 +45,8 @@ public class HotelBroker implements Runnable {
 				buffer = new byte[1024];
         		DatagramPacket dp = new DatagramPacket(buffer, buffer.length);
 				socket.receive(dp);
-	            InetAddress address = dp.getAddress();
-	            int port = dp.getPort();
+				InetAddress address = dp.getAddress();
+				int port = dp.getPort();
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
 	            logger.info(brokerName + " received: <"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
@@ -77,18 +75,18 @@ public class HotelBroker implements Runnable {
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
-					Message res= msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
-					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
-					logger.trace("<" + brokerName + "> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
+					//answer with a list oft all rooms
+					response = msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
+					DatagramPacket packetHotel = new DatagramPacket(response.toString().getBytes(), response.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
+					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
 					response = null;
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", localAddress, hotelBrokerPort);
+						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", msg.getSenderAddress(), hotelBrokerPort);
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
-						this.wasAbortBefore = true;
 					}
 					break;
 				case COMMIT:
@@ -96,12 +94,8 @@ public class HotelBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
 					break;
 				case ROLLBACK:
-					if(!this.wasAbortBefore) {
-						this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
-					} else {
-						this.wasAbortBefore = false;
-						this.hotel.removeRequestFromList(msg.getBookingID());
-					}
+					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					this.hotel.removeRequestFromList(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
 				case ERROR:

@@ -31,9 +31,21 @@ public class CarPool {
     }
 
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
-        boolean result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
-        this.addRequestToList(target, port, bookingId, carId, startTime, endTime, result);
-        return result;
+        CarRequest request = getRequest(bookingId);
+        boolean result;
+        if(request == null) {
+            result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
+            this.addRequestToList(target, port, bookingId, carId, startTime, endTime, result);
+            return result;
+        } else {
+            StatusTypes state = request.getState();
+            if(state.equals(StatusTypes.READY)) {
+                result = true;
+            } else {
+                result = false;
+            }
+            return result;
+        }
     }
 
     public void commitRequestOfBookingID(String bookingID) {
@@ -64,7 +76,9 @@ public class CarPool {
 
     public void roolbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
-        carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        if(request.getState().equals(StatusTypes.ABORT) ) {
+            carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        }
         this.removeRequestFromList(bookingID);
     }
 
