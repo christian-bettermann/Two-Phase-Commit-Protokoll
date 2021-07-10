@@ -37,6 +37,10 @@ public class MessageFactory {
         return new Message(StatusTypes.BOOKING, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }
 
+    public Message buildThrowaway(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
+        return new Message(StatusTypes.THROWAWAY, pSenderAddress, pSenderPort, pBookingIdString, pContent);
+    }
+    
     public Message buildError(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
         return new Message(StatusTypes.ERROR, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }

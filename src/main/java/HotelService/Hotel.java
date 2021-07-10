@@ -85,7 +85,7 @@ public class Hotel {
         }
     }
 
-    public void roolbackRequestOfBookingID(String bookingId) {
+    public void rollbackRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
         if(request != null) {
             if (request.getState().equals(StatusTypes.READY)) {

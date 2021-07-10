@@ -186,8 +186,10 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case INQUIRE:					
 					//resend COMMIT
-					logger.error("#######################"+ request.getCarBrokerState().toString());
-					logger.error("#######################"+ request.getHotelBrokerState().toString());
+					if(this.getRequest(msg.getBookingID()) == null) {
+						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+						break;
+					}
 					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 					}
@@ -336,7 +338,15 @@ public class ServerMessageHandler implements Runnable{
 		}
 	}
 
-	public void removeRequestFromList(String bookingId) {
+	protected void increaseInquireCounter(String bookingId) {
+		for(int i = 0; i < requestList.size(); i++) {
+			if(this.requestList.get(i).getId().equals(bookingId)) {
+				this.requestList.get(i).increaseInquireCounter();
+			}
+		}
+	}
+	
+	protected void removeRequestFromList(String bookingId) {
 		for(int i = 0; i < requestList.size(); i++) {
 			if(this.requestList.get(i).getId().equals(bookingId)) {
 				this.requestList.remove(i);
@@ -414,7 +424,7 @@ public class ServerMessageHandler implements Runnable{
 		return request;
 	}
 
-	public ArrayList<ServerRequest> getRequestList() {
+	protected ArrayList<ServerRequest> getRequestList() {
 		return requestList;
 	}
 	
