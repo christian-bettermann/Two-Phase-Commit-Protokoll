@@ -24,11 +24,6 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 		while(true) {
 			ArrayList<ServerRequest> smhrl = new ArrayList<ServerRequest>(smh.getRequestList());
 			Iterator<ServerRequest> smhrlit = smhrl.iterator();
-			try {
-				TimeUnit.SECONDS.sleep(1);
-			} catch (InterruptedException e1) {
-				e1.printStackTrace();
-			}
 			while(smhrlit.hasNext()) {
 				ServerRequest req = smhrlit.next();
 				if(req.getTimestamp().getTime()  + 20 * 1000 < new Date().getTime()) {
@@ -42,20 +37,24 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 								Message prepareMsgCar = smh.msgFactory.buildPrepare(req.getId(), req.contentToString(), InetAddress.getLocalHost(), smh.socket.getLocalPort());
 								DatagramPacket preparePacketCar = new DatagramPacket(prepareMsgCar.toString().getBytes(), prepareMsgCar.toString().getBytes().length, smh.server.getCarBroker().getAddress(), smh.server.getCarBroker().getPort());
 								logger.trace("<" + smh.name + "> resent: <"+ new String(preparePacketCar.getData(), 0, preparePacketCar.getLength()) +">");
-								smh.socket.send(preparePacketCar);
-								smh.updateRequestTimestamp(req.getId(), new Date());
+								smh.socket.send(preparePacketCar);	
 							}
 							if(req.getHotelBrokerState() == StatusTypes.INITIALIZED) {
 								Message prepareMsgHotel = smh.msgFactory.buildPrepare(req.getId(), req.contentToString(), InetAddress.getLocalHost(), smh.socket.getLocalPort());
 								DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, smh.server.getHotelBroker().getAddress(), smh.server.getHotelBroker().getPort());
 								logger.trace("<" + smh.name + "> resent: <"+ new String(preparePacketHotel.getData(), 0, preparePacketHotel.getLength()) +">");
 								smh.socket.send(preparePacketHotel);
-								smh.updateRequestTimestamp(req.getId(), new Date());
 							}
 						}
+						smh.updateRequestTimestamp(req.getId(), new Date());
 					} catch(Exception e) {
 						e.printStackTrace();
 					}
+				}
+				try {
+					TimeUnit.SECONDS.sleep(1);
+				} catch (InterruptedException e1) {
+					e1.printStackTrace();
 				}
 			}
 		}

@@ -71,7 +71,8 @@ public class Client implements Runnable {
 	    JComboBox<String> rooms = new JComboBox<String>();  
 	    JSONArray carsJson = new JSONArray();
 	    JSONArray roomsJson = new JSONArray();
-	    for(int i = 0; i < 2; i++) {
+	    int i = 0;
+	    while(i < 2) {
 	    	buffer = new byte[1024];
 	    	DatagramPacket response = new DatagramPacket(buffer, buffer.length);
 		    try {
@@ -82,6 +83,7 @@ public class Client implements Runnable {
 			    Message responseMessage = new Message(responseString);
 			    
 			    if(responseMessage.getStatus() == StatusTypes.INFOCARS) {
+			    	i++;
 			    	//parse responseMessage.getStatusMessage() to JSON and fill dropdown	    	
 			    	String[] infoCarsArray = responseMessage.getStatusMessage().split("!");
 			    	for(String carString : infoCarsArray) {
@@ -98,6 +100,7 @@ public class Client implements Runnable {
 			    }
 			    
 			    if(responseMessage.getStatus() == StatusTypes.INFOROOMS) {
+			    	i++;
 			    	//parse responseMessage.getStatusMessage() to JSON and fill dropdown
 			    	String[] infoRoomsArray = responseMessage.getStatusMessage().split("!");
 			    	for(String roomString : infoRoomsArray) {

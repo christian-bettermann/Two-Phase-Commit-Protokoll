@@ -103,6 +103,7 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case READY:
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("CARBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.READY, null);
 						if(request.bothReady()) {
@@ -124,6 +125,7 @@ public class ServerMessageHandler implements Runnable{
 						}
 					}
 					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("HOTELBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY);
 						if(request.bothReady()) {
@@ -147,6 +149,7 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case ABORT:
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("CARBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ABORT, null);
 						if(request.getHotelBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.READY)) {
@@ -166,6 +169,7 @@ public class ServerMessageHandler implements Runnable{
 						}
 					}
 					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("HOTELBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ABORT);
 						if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getCarBrokerState().equals(StatusTypes.READY)) {
@@ -186,6 +190,7 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case INQUIRE:
+					updateRequestTimestamp(msg.getBookingID(), new Date());
 					if(this.getRequest(msg.getBookingID()) == null) {
 						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						break;

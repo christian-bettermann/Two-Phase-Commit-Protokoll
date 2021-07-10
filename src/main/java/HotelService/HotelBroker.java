@@ -91,7 +91,7 @@ public class HotelBroker implements Runnable {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
 					}
 					logger.error("Schnell killen #################################");
-					TimeUnit.SECONDS.sleep(30);
+					TimeUnit.SECONDS.sleep(5);
 					break;
 				case COMMIT:
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
