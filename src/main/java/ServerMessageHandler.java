@@ -266,15 +266,6 @@ public class ServerMessageHandler implements Runnable{
 					}
 					response = null;
 					break;
-				case TESTING:
-					if(statusMessage.equals("HiFromCarBroker") || statusMessage.equals("HiFromHotel")) {
-						response = new Message(StatusTypes.TESTING, InetAddress.getLocalHost(), socket.getLocalPort(), "0", "HiFromServerMessageHandler");
-					}
-					if(statusMessage.equals("OK")) {
-						logger.info("FINISHED TEST");
-						response = null;
-					}
-					break;
 				case ERROR:
 					response = null;
 					break;

@@ -76,7 +76,6 @@ public class Server implements Runnable {
 		logger.info("Starting Server <" + serverName + "> on port <" + serverPort + "> ...");
 		try {
 			socket = new DatagramSocket(serverPort);
-			socket.setReuseAddress(true);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
@@ -128,16 +127,6 @@ public class Server implements Runnable {
 		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
 		Thread incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
-		
-		//Add hotelBroker test message to Queue
-		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, broker[1].getAddress(), broker[1].getPort(), "0", "HiFromHotel");
-		incomingMessages.add(hotelBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
-		
-		//Add carBroker test message to Queue
-		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, broker[0].getAddress(), broker[0].getPort(), "0", "HiFromCarBroker");
-		incomingMessages.add(carBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
 		
 		while(online) {
 			try {
