@@ -251,7 +251,6 @@ public class Client implements Runnable {
 				case ERROR:
 					if(msg.getStatusMessage().equals("ERROR_Invalid_Booking")) {
 						textArea.append("=> Server received an invalid Booking Request (check dates)\n\n");
-						
 					}
 					response = null;
 					break;
@@ -264,7 +263,6 @@ public class Client implements Runnable {
 		}
 		return response;
 	}
-			
 	
 	public void sendBooking(String carID, String hotelID, String startTime, String endTime) {
 		setSelectedServerPort(bg);

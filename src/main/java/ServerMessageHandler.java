@@ -32,7 +32,6 @@ public class ServerMessageHandler implements Runnable{
 	private final Server server;
 	private final ArrayList<ServerRequest> requestList;
 	
-	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.id = id;
 		this.jsonHandler = new JsonHandler();
@@ -47,6 +46,7 @@ public class ServerMessageHandler implements Runnable{
 	public void run() {
 		logger.info("Starting <" + name + "> for port <" + socket.getLocalPort() + ">...");
 		online = true;
+		ServerMessageHandlerTimeChecker smhtc = new ServerMessageHandlerTimeChecker(this);
 		while (online) {
         	try {
 				Message inMsg = incomingMessages.take();
@@ -244,8 +244,6 @@ public class ServerMessageHandler implements Runnable{
 						response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
 						logger.trace("<" + name + "> resent: <"+ response.toString() +">");
 					}
-					//##########################################
-					//What happens if one broker is still on initialize (offline)?
 					break;
 				case ACKNOWLEDGMENT:
 					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
