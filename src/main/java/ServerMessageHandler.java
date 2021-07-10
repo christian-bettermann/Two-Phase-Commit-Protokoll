@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.Semaphore;
 
 import JsonUtility.JsonHandler;
 import Message.*;
@@ -32,6 +33,7 @@ public class ServerMessageHandler implements Runnable{
 	private Boolean online;
 	protected final Server server;
 	private final ArrayList<ServerRequest> requestList;
+	private Semaphore sem;
 	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.id = id;
@@ -43,6 +45,7 @@ public class ServerMessageHandler implements Runnable{
 		this.socket = socket;
 		this.server = server;
 		this.requestList = new ArrayList<>();
+		this.sem = new Semaphore(1, true);
 		this.initialize();
 	}
 	
@@ -182,19 +185,24 @@ public class ServerMessageHandler implements Runnable{
 						}
 					}
 					break;
-				case INQUIRE:					
-					//resend COMMIT
+				case INQUIRE:
 					if(this.getRequest(msg.getBookingID()) == null) {
 						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						break;
 					}
-					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
+					//resend COMMIT
+					if(request.bothReady()) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 					}
 					//resend ROLLBACK
 					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
-						response = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
-					}
+						if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+							response = msgFactory.buildPrepare(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
+						}
+						if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
+							response = msgFactory.buildPrepare(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
+						}
+					}			
 					break;
 				case ACKNOWLEDGMENT:
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
@@ -232,6 +240,11 @@ public class ServerMessageHandler implements Runnable{
 	}
 
 	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime, InetAddress clientAddress, int clientPort, Date timestamp) {
+		try {
+			sem.acquire();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort, StatusTypes.INITIALIZED, StatusTypes.INITIALIZED, timestamp));
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath))
@@ -255,15 +268,22 @@ public class ServerMessageHandler implements Runnable{
 			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
+				file.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
+		sem.release();
 	}
 
 	protected void updateRequestTimestamp(String bookingId, Date newTimestamp) {
+		try {
+			sem.acquire();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		ServerRequest request = getRequest(bookingId);
 		boolean updated = false;
 		if(request.getTimestamp().before(newTimestamp)) {
@@ -288,15 +308,22 @@ public class ServerMessageHandler implements Runnable{
 			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
+				file.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
+		sem.release();
 	}
 	
 	private void updateRequestAtList(String bookingId, StatusTypes carState, StatusTypes hotelState) {
+		try {
+			sem.acquire();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		ServerRequest request = getRequest(bookingId);
 		boolean updated = false;
 		if(!(request.getCarBrokerState().equals(carState)) && carState != null) {
@@ -328,12 +355,15 @@ public class ServerMessageHandler implements Runnable{
 			try (FileWriter file = new FileWriter(this.requestFilePath)) {
 				file.write(requestsData.toJSONString());
 				file.flush();
+				file.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
+			
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
+		sem.release();
 	}
 
 	protected void increaseInquireCounter(String bookingId) {
@@ -351,9 +381,13 @@ public class ServerMessageHandler implements Runnable{
 				break;
 			}
 		}
+		try {
+			sem.acquire();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		JSONParser jParser = new JSONParser();
-		try (FileReader reader = new FileReader(this.requestFilePath))
-		{
+		try (FileReader reader = new FileReader(this.requestFilePath)) {
 			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
 			JSONArray serverRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
 			for(int i = 0; i < serverRequests.size(); i++) {
@@ -373,9 +407,15 @@ public class ServerMessageHandler implements Runnable{
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
+		sem.release();
 	}
 
 	private void initialize() {
+		try {
+			sem.acquire();
+		} catch (InterruptedException e1) {
+			e1.printStackTrace();
+		}
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(requestFilePath))
 		{
@@ -409,6 +449,7 @@ public class ServerMessageHandler implements Runnable{
 				answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 			}
 		}
+		sem.release();
 	}
 
 	private ServerRequest getRequest(String bookingId) {

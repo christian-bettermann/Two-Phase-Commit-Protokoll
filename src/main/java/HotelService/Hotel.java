@@ -52,8 +52,10 @@ public class Hotel {
     public boolean inquireMessage(String bookingId) {
         boolean result = false;
         RoomRequest request = getRequest(bookingId);
-        if(request.getState().equals(StatusTypes.READY)) {
-            result = true;
+        if(request != null) {
+	        if(request.getState().equals(StatusTypes.READY)) {
+	            result = true;
+	        }
         }
         return result;
     }

@@ -8,6 +8,8 @@ import java.net.InetAddress;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.concurrent.TimeUnit;
+
 import Message.*;
 import Request.RoomRequest;
 import org.apache.logging.log4j.LogManager;
@@ -88,6 +90,8 @@ public class HotelBroker implements Runnable {
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
 					}
+					logger.error("Schnell killen #################################");
+					TimeUnit.SECONDS.sleep(30);
 					break;
 				case COMMIT:
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
