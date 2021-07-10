@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -12,7 +11,6 @@ import java.util.concurrent.BlockingQueue;
 
 import JsonUtility.JsonHandler;
 import Message.*;
-import Request.CarRequest;
 import Request.ServerRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;

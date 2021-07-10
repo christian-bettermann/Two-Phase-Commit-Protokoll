@@ -95,7 +95,6 @@ public class HotelBroker implements Runnable {
 					break;
 				case ROLLBACK:
 					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
-					this.hotel.removeRequestFromList(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
 				case ERROR:
