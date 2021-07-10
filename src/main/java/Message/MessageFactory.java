@@ -5,6 +5,10 @@ import java.net.InetAddress;
 public class MessageFactory {
     //Attribute
 
+    public Message buildEmpty(String pContent) {
+        return new Message(pContent);
+    }
+
     public Message buildPrepare(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
         return new Message(StatusTypes.PREPARE, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }
@@ -27,6 +31,10 @@ public class MessageFactory {
 
     public Message buildCommit(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
         return new Message(StatusTypes.COMMIT, pSenderAddress, pSenderPort, pBookingIdString, pContent);
+    }
+
+    public Message buildBooking(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
+        return new Message(StatusTypes.BOOKING, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }
 
     public Message buildError(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
