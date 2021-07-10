@@ -84,7 +84,7 @@ public class HotelBroker implements Runnable {
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
-						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", msg.getSenderAddress(), hotelBrokerPort);
+						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", localAddress, hotelBrokerPort);
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
 					}

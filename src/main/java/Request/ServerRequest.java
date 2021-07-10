@@ -14,16 +14,18 @@ public class ServerRequest extends Request{
     private StatusTypes stateOfHotelBroker;
     private InetAddress clientAddress;
     private int clientPort;
+    private Date timestamp;
 
-    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort) {
+    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress pClientAddress, int pClientPort, Date pTimestamp) {
         this.id = pBookingId;
         this.carId = pCarId;
         this.roomId = pRoomId;
         this.messageCounter = 0;
         this.startTime = pStartTime;
         this.endTime = pEndTime;
-        this.clientAddress = clientAddress;
-        this.clientPort = clientPort;
+        this.clientAddress = pClientAddress;
+        this.clientPort = pClientPort;
+        this.timestamp = pTimestamp;
         this.stateOfCarBroker = StatusTypes.INITIALIZED;
         this.stateOfHotelBroker = StatusTypes.INITIALIZED;
     }
@@ -70,6 +72,18 @@ public class ServerRequest extends Request{
 		return clientPort;
 	}
 
+	public Date getTimestamp() {
+		return timestamp;
+	}
+	
+	public void setTimestamp(Date timestamp) {
+		this.timestamp = timestamp;
+	}
+	
+    public String contentToString() {
+    	return carId + "_" + roomId + "_" + startTime.getTime() + "_" + endTime.getTime();
+    }
+	
 	public boolean bothReady() {
         if(this.stateOfCarBroker.equals(StatusTypes.READY) && this.stateOfHotelBroker.equals(StatusTypes.READY)) {
             return true;
