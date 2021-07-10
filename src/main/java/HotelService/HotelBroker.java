@@ -105,11 +105,6 @@ public class HotelBroker implements Runnable {
 					}
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
-				case TESTING:
-					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = msgFactory.buildTest(msg.getBookingID(),"OK", localAddress, hotelBrokerPort);
-					}
-					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:

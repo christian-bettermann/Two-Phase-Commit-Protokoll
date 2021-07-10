@@ -166,9 +166,8 @@ public class ControlPanel implements Runnable {
 		    	if(sone.getText().equals("Start")) {
 		    		sone.setText("Shutdown");
 		    		
-		    		int startServerOnePort = serverOne.serverPort;
 		    		serverOne.closeSocket(); //free port
-		    		Server serverOne = new Server(1);
+		    		serverOne = new Server(1);
 		    		serverOneThread = new Thread(serverOne);
 		    		serverOneThread.start();
 		    		
@@ -205,7 +204,6 @@ public class ControlPanel implements Runnable {
 		    	if(stwo.getText().equals("Start")) {
 		    		stwo.setText("Shutdown");
 		    		
-		    		int startServerTwoPort = serverTwo.serverPort;
 		    		serverTwo.closeSocket(); //free port
 		    		serverTwo = new Server(2);
 		    		serverTwoThread = new Thread(serverTwo);

@@ -103,11 +103,6 @@ public class CarBroker implements Runnable {
 					}
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					break;
-				case TESTING:
-					if(statusMessage.equals("HiFromServerMessageHandler")) {
-						response = msgFactory.buildTest(msg.getBookingID(), "OK", localAddress, carBrokerPort);
-					}
-					break;
 				case ERROR:
 					break;
 				case CONNECTIONTEST:

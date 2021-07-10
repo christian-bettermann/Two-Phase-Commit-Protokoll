@@ -33,7 +33,6 @@ public class Server implements Runnable {
     
 	public Server (int id) {
 		this.id = id;
-		logger.trace("Creating Server <" + serverName + ">...");
 		try {
 			localAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
@@ -51,6 +50,7 @@ public class Server implements Runnable {
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;
 			this.serverName = configData.get("serviceName").toString();
+			logger.trace("Creating Server <" + serverName + ">...");
 			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
 			this.serverPort = Integer.parseInt(configData.get("port").toString());
 			carBrokerAddress = InetAddress.getByName(configData.get("carBrokerIp").toString());
@@ -127,16 +127,6 @@ public class Server implements Runnable {
 		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
 		Thread incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
-		
-		//Add hotelBroker test message to Queue
-		Message hotelBrokerTestMsg = new Message(StatusTypes.TESTING, broker[1].getAddress(), broker[1].getPort(), "0", "HiFromHotel");
-		incomingMessages.add(hotelBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ hotelBrokerTestMsg.toString()+ ">");
-		
-		//Add carBroker test message to Queue
-		Message carBrokerTestMsg = new Message(StatusTypes.TESTING, broker[0].getAddress(), broker[0].getPort(), "0", "HiFromCarBroker");
-		incomingMessages.add(carBrokerTestMsg);
-		logger.trace("Added Message to "+ serverName +"Queue: <"+ carBrokerTestMsg.toString() + ">");
 		
 		while(online) {
 			try {

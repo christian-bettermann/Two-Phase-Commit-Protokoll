@@ -57,10 +57,6 @@ public class MessageFactory {
         return new Message(StatusTypes.INFO, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }
 
-    public Message buildTest(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
-        return new Message(StatusTypes.TESTING, pSenderAddress, pSenderPort, pBookingIdString, pContent);
-    }
-
     public Message buildConnectionTest(String pBookingIdString, String pContent, InetAddress pSenderAddress, int pSenderPort) {
         return new Message(StatusTypes.CONNECTIONTEST, pSenderAddress, pSenderPort, pBookingIdString, pContent);
     }

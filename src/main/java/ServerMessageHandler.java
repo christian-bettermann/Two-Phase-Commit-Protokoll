@@ -225,7 +225,6 @@ public class ServerMessageHandler implements Runnable{
 					//resend COMMIT
 					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
-
 					}
 					//resend ROLLBACK
 					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
@@ -252,15 +251,6 @@ public class ServerMessageHandler implements Runnable{
 						}
 					}
 					response = null;
-					break;
-				case TESTING:
-					if(statusMessage.equals("HiFromCarBroker") || statusMessage.equals("HiFromHotel")) {
-						response = msgFactory.buildTest("0", "HiFromServerMessageHandler", InetAddress.getLocalHost(), socket.getLocalPort());
-					}
-					if(statusMessage.equals("OK")) {
-						logger.info("FINISHED TEST");
-						response = null;
-					}
 					break;
 				case ERROR:
 					response = null;
