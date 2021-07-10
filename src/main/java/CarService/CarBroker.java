@@ -76,16 +76,11 @@ public class CarBroker implements Runnable {
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
-					//answer with a list oft all cars
-					//response = msgFactory.buildInfoCars(msg.getBookingID(), pool.getInfoOfCars(), localAddress, carBrokerPort);
-					//logger.trace("<" + brokerName + "> sent: <" + response.toString() + ">");
-					//answer with a list oft all cars
-					Message res = new Message(StatusTypes.INFOCARS, this.localAddress, this.carBrokerPort, msg.getBookingID(), pool.getInfoOfCars());
+					Message res = msgFactory.buildInfoCars(msg.getBookingID(), pool.getInfoOfCars(), localAddress, carBrokerPort);
 					DatagramPacket packetCar = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
-					logger.trace("<CarBroker> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
+					logger.trace("<"+ brokerName +"> sent: <"+ new String(packetCar.getData(), 0, packetCar.getLength()) +">");
 					socket.send(packetCar);
 					response = null;
-					
 					break;
 				case PREPARE:
 					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {

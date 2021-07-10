@@ -77,19 +77,11 @@ public class HotelBroker implements Runnable {
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
-					//answer with a list oft all rooms
-					//response = msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
-					//logger.trace("<" + brokerName + "> sent: <"+ response.toString() + ">");
-					
-					
-					//answer with a list oft all rooms
-					Message res= new Message(StatusTypes.INFOROOMS, this.localAddress, this.hotelBrokerPort,  msg.getBookingID(), hotel.getInfoOfRooms());
+					Message res= msgFactory.buildInfoRooms(msg.getBookingID(), hotel.getInfoOfRooms(), localAddress, hotelBrokerPort);
 					DatagramPacket packetHotel = new DatagramPacket(res.toString().getBytes(), res.toString().getBytes().length, msg.getSenderAddress(), msg.getSenderPort());
-					logger.trace("<HotelBroker> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
+					logger.trace("<" + brokerName + "> sent: <"+ new String(packetHotel.getData(), 0, packetHotel.getLength()) +">");
 					socket.send(packetHotel);
 					response = null;
-					
-					
 					break;
 				case PREPARE:
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {

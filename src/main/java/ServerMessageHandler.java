@@ -181,6 +181,19 @@ public class ServerMessageHandler implements Runnable{
 						response = null;
 					}
 					break;
+				case INQUIRE:					
+					//resend COMMIT
+					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
+						response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
+
+					}
+					//resend ROLLBACK
+					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
+						response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
+					}
+					//##########################################
+					//What happens if one broker is still on initialize (offline)?
+					break;
 				case ACKNOWLEDGMENT:
 					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ACKNOWLEDGMENT, null);
