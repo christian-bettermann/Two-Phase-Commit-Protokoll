@@ -29,7 +29,8 @@ public class Server implements Runnable {
     private InetAddress localAddress;
     int serverPort;
     boolean brokerToCheckOnline;
-    Broker[] broker = new Broker[2];
+    Broker carBroker;
+    Broker hotelBroker;
     
 	public Server (int id) {
 		this.id = id;
@@ -38,8 +39,6 @@ public class Server implements Runnable {
 		} catch (UnknownHostException e) {
 			e.printStackTrace();
 		}
-		Broker car;
-		Broker hotel;
 		InetAddress carBrokerAddress;
 		InetAddress hotelBrokerAddress;
 		int carBrokerPort;
@@ -57,15 +56,9 @@ public class Server implements Runnable {
 			hotelBrokerAddress = InetAddress.getByName(configData.get("hotelBrokerIp").toString());
 			carBrokerPort = Integer.parseInt(configData.get("carBrokerPort").toString());
 			hotelBrokerPort = Integer.parseInt(configData.get("hotelBrokerPort").toString());
-			car = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
-			hotel = new Broker("HotelBroker", hotelBrokerAddress, hotelBrokerPort);
-			broker[0] = car;
-			broker[1] = hotel;
-		} catch (FileNotFoundException e) {
-			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
-		} catch (ParseException e) {
+			this.carBroker = new Broker("CarBroker", carBrokerAddress, carBrokerPort);
+			this.hotelBroker = new Broker("HotelBroker", hotelBrokerAddress, hotelBrokerPort);
+		} catch (ParseException | IOException e) {
 			e.printStackTrace();
 		}
 		incomingMessages = new ArrayBlockingQueue<Message>(1024);
@@ -79,7 +72,7 @@ public class Server implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		
+		Broker[] broker = {carBroker, hotelBroker};
 		//Sending initial Messages to Brokers
 		for(Broker b : broker) {
 			do {
@@ -160,8 +153,12 @@ public class Server implements Runnable {
 		}
 	}
 	
-	public Broker[] getBroker() {
-		return broker;
+	public Broker getCarBroker() {
+		return carBroker;
+	}
+
+	public Broker getHotelBroker() {
+		return hotelBroker;
 	}
 	
 	public String getName() {
