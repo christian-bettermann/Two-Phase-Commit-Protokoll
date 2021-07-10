@@ -28,7 +28,6 @@ public class HotelBroker implements Runnable {
     private final Hotel hotel;
     private String brokerName;
     private InetAddress localAddress;
-    private boolean wasAbortBefore;
     int hotelBrokerPort;
     
     public HotelBroker() {
@@ -36,7 +35,6 @@ public class HotelBroker implements Runnable {
     	this.msgFactory = new MessageFactory();
     	this.hotel = new Hotel();
 		this.hotel.initialize();
-		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -89,7 +87,6 @@ public class HotelBroker implements Runnable {
 						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", msg.getSenderAddress(), hotelBrokerPort);
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
-						this.wasAbortBefore = true;
 					}
 					break;
 				case COMMIT:
@@ -97,12 +94,8 @@ public class HotelBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
 					break;
 				case ROLLBACK:
-					if(!this.wasAbortBefore) {
-						this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
-					} else {
-						this.wasAbortBefore = false;
-						this.hotel.removeRequestFromList(msg.getBookingID());
-					}
+					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					this.hotel.removeRequestFromList(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
 				case ERROR:

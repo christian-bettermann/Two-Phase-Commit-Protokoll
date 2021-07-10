@@ -2,6 +2,7 @@ package HotelService;
 
 import JsonUtility.JsonHandler;
 import Message.StatusTypes;
+import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -31,9 +32,21 @@ public class Hotel {
     }
 
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
-        boolean result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
-        this.addRequestToList(target, port, bookingId, roomId, startTime, endTime, result);
-        return result;
+        RoomRequest request = getRequest(bookingId);
+        boolean result;
+        if(request  == null) {
+            result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
+            this.addRequestToList(target, port, bookingId, roomId, startTime, endTime, result);
+            return result;
+        } else {
+            StatusTypes state = request.getState();
+            if(state.equals(StatusTypes.READY)) {
+                result = true;
+            } else {
+                result = false;
+            }
+            return result;
+        }
     }
 
     public void commitRequestOfBookingID(String bookingId) {
@@ -64,7 +77,9 @@ public class Hotel {
 
     public void roolbackRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
-        roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        if(request.getState().equals(StatusTypes.ABORT) ) {
+            roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        }
         this.removeRequestFromList(bookingId);
     }
 

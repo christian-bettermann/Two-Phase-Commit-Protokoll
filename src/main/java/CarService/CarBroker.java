@@ -27,7 +27,6 @@ public class CarBroker implements Runnable {
     private int carBrokerPort;
     private final CarPool pool;
     private String brokerName;
-    private boolean wasAbortBefore;
     private InetAddress localAddress;
     
     public CarBroker() {
@@ -35,7 +34,6 @@ public class CarBroker implements Runnable {
     	this.msgFactory = new MessageFactory();
 		this.pool = new CarPool();
 		this.pool.initialize();
-		this.wasAbortBefore = false;
 		this.initialize();
     }
     
@@ -87,7 +85,6 @@ public class CarBroker implements Runnable {
 						response = msgFactory.buildReady(msg.getBookingID(), "CarIsFree", localAddress, carBrokerPort);
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "CarIsAlreadyBlocked", localAddress, carBrokerPort);
-						this.wasAbortBefore = true;
 					}
 					break;
 				case COMMIT:
@@ -95,12 +92,7 @@ public class CarBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenBooked", localAddress, carBrokerPort);
 					break;
 				case ROLLBACK:
-					if(!this.wasAbortBefore) {
-						this.pool.roolbackRequestOfBookingID(msg.getBookingID());
-					} else {
-						this.wasAbortBefore = false;
-						this.pool.removeRequestFromList(msg.getBookingID());
-					}
+					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					break;
 				case ERROR:
