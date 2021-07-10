@@ -15,6 +15,7 @@ public class ServerRequest extends Request{
     private InetAddress clientAddress;
     private int clientPort;
     private Date timestamp;
+    private int inquireCounter;
 
     public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort, StatusTypes carState, StatusTypes hotelState, Date pTimestamp) {
         this.id = pBookingId;
@@ -28,6 +29,7 @@ public class ServerRequest extends Request{
         this.timestamp = pTimestamp;
         this.stateOfCarBroker = carState;
         this.stateOfHotelBroker = hotelState;
+        this.inquireCounter = 0;
     }
 
     public int getCarId() {
@@ -84,6 +86,14 @@ public class ServerRequest extends Request{
     	return carId + "_" + roomId + "_" + startTime.getTime() + "_" + endTime.getTime();
     }
 	
+    public void increaseInquireCounter() {
+    	this.inquireCounter++;
+    }
+    
+    public int getInquireCounter() {
+    	return inquireCounter;
+    }
+    
 	public boolean bothReady() {
         if(this.stateOfCarBroker.equals(StatusTypes.READY) && this.stateOfHotelBroker.equals(StatusTypes.READY)) {
             return true;

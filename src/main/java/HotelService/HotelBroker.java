@@ -94,7 +94,7 @@ public class HotelBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
 					break;
 				case ROLLBACK:
-					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
 					break;
 				case ERROR:
@@ -112,7 +112,7 @@ public class HotelBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
-					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());
 					break;
 				default:
 					response = msgFactory.buildError(null, "ERROR ID_FormatException", localAddress, hotelBrokerPort);
