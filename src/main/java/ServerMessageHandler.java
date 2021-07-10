@@ -199,7 +199,7 @@ public class ServerMessageHandler implements Runnable{
 					if(request.bothReady()) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 					}
-					//resend
+					//resend ROLLBACK
 					if(request.getCarBrokerState().equals(StatusTypes.ABORT) && request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
 						response = msgFactory.buildRollback(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
 						break;	
