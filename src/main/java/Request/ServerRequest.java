@@ -16,20 +16,6 @@ public class ServerRequest extends Request{
     private int clientPort;
     private Date timestamp;
 
-    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress pClientAddress, int pClientPort, Date pTimestamp) {
-        this.id = pBookingId;
-        this.carId = pCarId;
-        this.roomId = pRoomId;
-        this.messageCounter = 0;
-        this.startTime = pStartTime;
-        this.endTime = pEndTime;
-        this.clientAddress = pClientAddress;
-        this.clientPort = pClientPort;
-        
-        this.stateOfCarBroker = StatusTypes.INITIALIZED;
-        this.stateOfHotelBroker = StatusTypes.INITIALIZED;
-    }
-
     public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort, StatusTypes carState, StatusTypes hotelState, Date pTimestamp) {
         this.id = pBookingId;
         this.carId = pCarId;

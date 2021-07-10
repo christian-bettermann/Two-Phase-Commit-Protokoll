@@ -31,21 +31,20 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 			}
 			while(smhrlit.hasNext()) {
 				ServerRequest req = smhrlit.next();
+				logger.error(req.getTimestamp().getTime() +"############################");
 				if(req.getTimestamp().getTime()  + 20 * 1000 < new Date().getTime()) {
 					try {
 						if(req.getCarBrokerState() == StatusTypes.INITIALIZED) {
 							Message prepareMsgCar = smh.msgFactory.buildPrepare(req.getId(), req.contentToString(), InetAddress.getLocalHost(), smh.socket.getLocalPort());
-							DatagramPacket preparePacketCar = new DatagramPacket(prepareMsgCar.toString().getBytes(), prepareMsgCar.toString().getBytes().length, smh.server.getBroker()[0].getAddress(), smh.server.getBroker()[0].getPort());
+							DatagramPacket preparePacketCar = new DatagramPacket(prepareMsgCar.toString().getBytes(), prepareMsgCar.toString().getBytes().length, smh.server.getCarBroker().getAddress(), smh.server.getCarBroker().getPort());
 							logger.trace("<" + smh.name + "> resent: <"+ new String(preparePacketCar.getData(), 0, preparePacketCar.getLength()) +">");
-							logger.error("#####################1######################");
 							smh.socket.send(preparePacketCar);
 							smh.updateRequestTimestamp(req.getId(), new Date());
 						}
 						if(req.getHotelBrokerState() == StatusTypes.INITIALIZED) {
 							Message prepareMsgHotel = smh.msgFactory.buildPrepare(req.getId(), req.contentToString(), InetAddress.getLocalHost(), smh.socket.getLocalPort());
-							DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, smh.server.getBroker()[1].getAddress(), smh.server.getBroker()[1].getPort());
+							DatagramPacket preparePacketHotel = new DatagramPacket(prepareMsgHotel.toString().getBytes(), prepareMsgHotel.toString().getBytes().length, smh.server.getHotelBroker().getAddress(), smh.server.getHotelBroker().getPort());
 							logger.trace("<" + smh.name + "> resent: <"+ new String(preparePacketHotel.getData(), 0, preparePacketHotel.getLength()) +">");
-							logger.error("#####################2######################");
 							smh.socket.send(preparePacketHotel);
 							smh.updateRequestTimestamp(req.getId(), new Date());
 						}
