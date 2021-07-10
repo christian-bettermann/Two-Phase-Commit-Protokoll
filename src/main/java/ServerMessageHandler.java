@@ -22,6 +22,7 @@ import org.json.simple.parser.ParseException;
 public class ServerMessageHandler implements Runnable{
 	//Attribute
 	private final int id;
+	private MessageFactory msgFactory;
 	private final String requestFilePath;
 	private final JsonHandler jsonHandler;
 	private static final Logger logger = LogManager.getRootLogger();
@@ -35,6 +36,7 @@ public class ServerMessageHandler implements Runnable{
 	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.id = id;
+		this.msgFactory = new MessageFactory();
 		this.jsonHandler = new JsonHandler();
 		this.requestFilePath = "src/main/resources/Server/requests_Server_" + id + ".json";
 		this.incomingMessages = incomingMessages;
