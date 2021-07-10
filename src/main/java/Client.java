@@ -245,7 +245,7 @@ public class Client implements Runnable {
 					response = null;
 					break;
 				case ROLLBACK:
-					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +" InfoMessage: "+ msg.getStatusMessage() +">\n\n");
+					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: "+ msg.getStatusMessage() +">\n\n");
 					response = null;
 					break;
 				case ERROR:

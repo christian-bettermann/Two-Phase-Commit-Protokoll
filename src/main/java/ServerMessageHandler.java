@@ -237,11 +237,12 @@ public class ServerMessageHandler implements Runnable{
 					//resend COMMIT
 					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
 						response = new Message(StatusTypes.COMMIT, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThanBook");
-
+						logger.trace("<" + name + "> resent: <"+ response.toString() +">");
 					}
 					//resend ROLLBACK
 					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
 						response = new Message(StatusTypes.ROLLBACK, this.socket.getLocalAddress(), this.socket.getLocalPort(), msg.getBookingID(), "OkThenRollback");
+						logger.trace("<" + name + "> resent: <"+ response.toString() +">");
 					}
 					//##########################################
 					//What happens if one broker is still on initialize (offline)?

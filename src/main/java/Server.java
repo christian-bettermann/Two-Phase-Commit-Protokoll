@@ -33,7 +33,6 @@ public class Server implements Runnable {
     
 	public Server (int id) {
 		this.id = id;
-		logger.trace("Creating Server <" + serverName + ">...");
 		try {
 			localAddress = InetAddress.getLocalHost();
 		} catch (UnknownHostException e) {
@@ -51,6 +50,7 @@ public class Server implements Runnable {
 			Object jsonContent = jParser.parse(reader);
 			JSONObject configData = (JSONObject) jsonContent;
 			this.serverName = configData.get("serviceName").toString();
+			logger.trace("Creating Server <" + serverName + ">...");
 			this.localAddress = InetAddress.getByName(configData.get("ip").toString());
 			this.serverPort = Integer.parseInt(configData.get("port").toString());
 			carBrokerAddress = InetAddress.getByName(configData.get("carBrokerIp").toString());
@@ -76,6 +76,7 @@ public class Server implements Runnable {
 		logger.info("Starting Server <" + serverName + "> on port <" + serverPort + "> ...");
 		try {
 			socket = new DatagramSocket(serverPort);
+			socket.setReuseAddress(true);
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
