@@ -186,8 +186,10 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case INQUIRE:					
 					//resend COMMIT
+					logger.error("#######################"+ request.getCarBrokerState().toString());
+					logger.error("#######################"+ request.getHotelBrokerState().toString());
 					if(request.getCarBrokerState().equals(StatusTypes.READY) && request.getHotelBrokerState().equals(StatusTypes.READY)) {
-						response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 					}
 					//resend ROLLBACK
 					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
@@ -230,7 +232,7 @@ public class ServerMessageHandler implements Runnable{
 	}
 
 	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime, InetAddress clientAddress, int clientPort, Date timestamp) {
-		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort, timestamp));
+		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort, StatusTypes.INITIALIZED, StatusTypes.INITIALIZED, timestamp));
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
@@ -373,13 +375,13 @@ public class ServerMessageHandler implements Runnable{
 			JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
 			for (int i = 0; i < requests.size(); i++) {
 				JSONObject requestInfo = jsonHandler.getAttributeAsJsonObject(requests.get(i));
-				ServerRequest singleServerRequest = new ServerRequest(requestInfo.get("BookindId").toString(),
+				ServerRequest singleServerRequest = new ServerRequest(requestInfo.get("BookingId").toString(),
 					Integer.parseInt(requestInfo.get("CarId").toString()),
 					Integer.parseInt(requestInfo.get("RoomId").toString()),
 					new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
 					new Date(Long.parseLong(requestInfo.get("EndTime").toString())),
 					InetAddress.getByName(requestInfo.get("ClientAddress").toString()),
-					Integer.parseInt(requestInfo.get("clientPort").toString()),
+					Integer.parseInt(requestInfo.get("ClientPort").toString()),
 					StatusTypes.valueOf(requestInfo.get("CarState").toString()),
 					StatusTypes.valueOf(requestInfo.get("HotelState").toString()),
 					new Date(Long.parseLong(requestInfo.get("Timestamp").toString()))
