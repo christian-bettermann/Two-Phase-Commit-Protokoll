@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.UUID;
@@ -11,6 +12,7 @@ import java.util.concurrent.BlockingQueue;
 
 import JsonUtility.JsonHandler;
 import Message.*;
+import Request.CarRequest;
 import Request.ServerRequest;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -43,6 +45,7 @@ public class ServerMessageHandler implements Runnable{
 		this.socket = socket;
 		this.server = server;
 		this.requestList = new ArrayList<>();
+		this.initialize();
 	}
 	
 	public void run() {
@@ -75,9 +78,9 @@ public class ServerMessageHandler implements Runnable{
 				case INFO:
 					logger.info("Handling Info message");
 					Message infoMsgCar = msgFactory.buildInfo("0", "GetInitialInfo", msg.getSenderAddress(), msg.getSenderPort());
-					answerParticipant(infoMsgCar, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+					answerParticipant(infoMsgCar, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 					Message infoMsgHotel = msgFactory.buildInfo("0", "GetInitialInfo", msg.getSenderAddress(), msg.getSenderPort());
-					answerParticipant(infoMsgHotel, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+					answerParticipant(infoMsgHotel, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 					break;
 				case BOOKING:
 					if(msg.getStatusMessageEndTime() > msg.getStatusMessageStartTime()) {
@@ -86,23 +89,23 @@ public class ServerMessageHandler implements Runnable{
 						String newBookingID = server.getName()+ "_" + timestamp + "_" + uniqueID;
 						response = msgFactory.buildBooking(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						Message prepareMsgCar = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
-						answerParticipant(prepareMsgCar, server.getBroker()[0].getAddress(),server.getBroker()[0].getPort());
+						answerParticipant(prepareMsgCar, server.getCarBroker().getAddress(),server.getCarBroker().getPort());
 						Message prepareMsgHotel = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
-						answerParticipant(prepareMsgHotel, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+						answerParticipant(prepareMsgHotel, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageRoomId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()), msg.getSenderAddress(), msg.getSenderPort());
 					} else {
 						response = msgFactory.buildError(null, "ERROR_Invalid_Booking", InetAddress.getLocalHost(), socket.getLocalPort());
 					}
 					break;
 				case READY:
-					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						logger.info("CARBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.READY, null);
 						if(request.bothReady()) {
 							logger.info("RESULT => COMMIT!");
 							request.resetMessageCounter();
 							Message answerForHotelBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForHotelBroker, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 							Message commitClient = msgFactory.buildCommit(msg.getBookingID(), msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 							answerParticipant(commitClient, request.getClientAddress(), request.getClientPort());
 							response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -110,20 +113,20 @@ public class ServerMessageHandler implements Runnable{
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForHotelBroker, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 							Message rollbackClient = msgFactory.buildRollback(msg.getBookingID(), msg.getStatusMessage() + "_HotelRoomIsAlreadyBlocked", InetAddress.getLocalHost(), socket.getLocalPort());
 							answerParticipant(rollbackClient, request.getClientAddress(), request.getClientPort());
 							response = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
 					}
-					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						logger.info("HOTELBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY);
 						if(request.bothReady()) {
 							logger.info("RESULT => COMMIT!");
 							request.resetMessageCounter();
 							Message answerForCarBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForCarBroker, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 							Message commitClient = msgFactory.buildCommit(msg.getBookingID(), msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 							answerParticipant(commitClient, request.getClientAddress(), request.getClientPort());
 							response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -131,7 +134,7 @@ public class ServerMessageHandler implements Runnable{
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForCarBroker, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 							Message rollbackClient = msgFactory.buildRollback(msg.getBookingID(), "CarIsAlreadyBlocked_" + msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 							answerParticipant(rollbackClient, request.getClientAddress(), request.getClientPort());
 							response = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -139,14 +142,14 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case ABORT:
-					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						logger.info("CARBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ABORT, null);
 						if(request.getHotelBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.READY)) {
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForHotelBroker, server.getBroker()[1].getAddress(), server.getBroker()[1].getPort());
+							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 							Message rollbackClient = msgFactory.buildEmpty("");
 							if(request.getHotelBrokerState().equals(StatusTypes.READY)) {
 								rollbackClient = msgFactory.buildRollback(msg.getBookingID(), msg.getStatusMessage() + "_HotelRoomIsFree", InetAddress.getLocalHost(), socket.getLocalPort());
@@ -158,14 +161,14 @@ public class ServerMessageHandler implements Runnable{
 							response = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
 					}
-					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						logger.info("HOTELBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ABORT);
 						if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getCarBrokerState().equals(StatusTypes.READY)) {
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
-							answerParticipant(answerForCarBroker, server.getBroker()[0].getAddress(), server.getBroker()[0].getPort());
+							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 							Message rollbackClient = msgFactory.buildEmpty("");
 							if(request.getCarBrokerState().equals(StatusTypes.READY)) {
 								rollbackClient = msgFactory.buildRollback(msg.getBookingID(), "CarIsFree_" + msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
@@ -189,7 +192,7 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case ACKNOWLEDGMENT:
-					if(msg.getSenderAddress().equals(server.getBroker()[0].getAddress()) && msg.getSenderPort() == server.getBroker()[0].getPort()) {
+					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ACKNOWLEDGMENT, null);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
@@ -197,7 +200,7 @@ public class ServerMessageHandler implements Runnable{
 							logger.info("FINISHED 2PC");
 						}
 					}
-					if(msg.getSenderAddress().equals(server.getBroker()[1].getAddress()) && msg.getSenderPort() == server.getBroker()[1].getPort()) {
+					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ACKNOWLEDGMENT);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
@@ -325,6 +328,41 @@ public class ServerMessageHandler implements Runnable{
 		}
 	}
 
+	private void initialize() {
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader(requestFilePath))
+		{
+			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+			JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
+			for (int i = 0; i < requests.size(); i++) {
+				JSONObject requestInfo = jsonHandler.getAttributeAsJsonObject(requests.get(i));
+				ServerRequest singleServerRequest = new ServerRequest(requestInfo.get("BookindId").toString(),
+					Integer.parseInt(requestInfo.get("CarId").toString()),
+					Integer.parseInt(requestInfo.get("RoomId").toString()),
+					new Date(Long.parseLong(requestInfo.get("StartTime").toString())),
+					new Date(Long.parseLong(requestInfo.get("EndTime").toString())),
+					InetAddress.getByName(requestInfo.get("ClientAddress").toString()),
+					Integer.parseInt(requestInfo.get("clientPort").toString()),
+					StatusTypes.valueOf(requestInfo.get("CarState").toString()),
+					StatusTypes.valueOf(requestInfo.get("HotelState").toString())
+				);
+				this.requestList.add(singleServerRequest);
+			}
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
+		ServerRequest singleOldRequest;
+		if(requestList.size() > 0) {
+			for(int i = 0; i < requestList.size(); i++) {
+				singleOldRequest = requestList.get(i);
+				Message msgForCarBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+				answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
+				Message msgForHotelBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+				answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+			}
+		}
+	}
+
 	private ServerRequest getRequest(String bookingId) {
 		ServerRequest request = null;
 		for(int i = 0; i < requestList.size(); i++) {
@@ -344,5 +382,21 @@ public class ServerMessageHandler implements Runnable{
 		} catch(IOException e) {
 			e.printStackTrace();
 		}
+	}
+
+	private boolean messageFromCarBroker(InetAddress pAddress, int pPort) {
+		boolean result = false;
+		if(pAddress.equals(server.getCarBroker().getAddress()) && pPort == server.getCarBroker().getPort()) {
+			result = true;
+		}
+		return result;
+	}
+
+	private boolean messageFromHotelBroker(InetAddress pAddress, int pPort) {
+		boolean result = false;
+		if(pAddress.equals(server.getHotelBroker().getAddress()) && pPort == server.getHotelBroker().getPort()) {
+			result = true;
+		}
+		return result;
 	}
 }

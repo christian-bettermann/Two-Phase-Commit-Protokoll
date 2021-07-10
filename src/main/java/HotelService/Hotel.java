@@ -77,7 +77,7 @@ public class Hotel {
 
     public void roolbackRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
-        if(request.getState().equals(StatusTypes.ABORT) ) {
+        if(request.getState().equals(StatusTypes.READY) ) {
             roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
         }
         this.removeRequestFromList(bookingId);

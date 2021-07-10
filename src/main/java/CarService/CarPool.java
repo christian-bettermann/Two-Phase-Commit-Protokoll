@@ -76,7 +76,7 @@ public class CarPool {
 
     public void roolbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
-        if(request.getState().equals(StatusTypes.ABORT) ) {
+        if(request.getState().equals(StatusTypes.READY) ) {
             carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
         }
         this.removeRequestFromList(bookingID);
