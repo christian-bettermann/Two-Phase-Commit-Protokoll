@@ -81,7 +81,7 @@ public class CarBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
-					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(),Integer.parseInt(msg.getStatusMessageCarId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
+					if(this.pool.checkCarOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(),Integer.parseInt(msg.getStatusMessageCarId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = msgFactory.buildReady(msg.getBookingID(), "CarIsFree", localAddress, carBrokerPort);
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "CarIsAlreadyBlocked", localAddress, carBrokerPort);
@@ -103,8 +103,14 @@ public class CarBroker implements Runnable {
 					}
 					break;
 				case INQUIRE:
+					if(pool.inquireMessage(msg.getBookingID())) {
+						response = msgFactory.buildReady(msg.getBookingID(), "CarIsFree", localAddress, carBrokerPort);
+					} else {
+						response = msgFactory.buildAbort(msg.getBookingID(), "CarIsAlreadyBlocked", localAddress, carBrokerPort);
+					}
 					break;
 				case THROWAWAY:
+					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
 					break;
 				default:
 					response = msgFactory.buildError(null,  "ERROR ID_FormatException", localAddress, carBrokerPort);

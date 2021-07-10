@@ -49,38 +49,50 @@ public class Hotel {
         }
     }
 
+    public boolean inquireMessage(String bookingId) {
+        boolean result = false;
+        RoomRequest request = getRequest(bookingId);
+        if(request.getState().equals(StatusTypes.READY)) {
+            result = true;
+        }
+        return result;
+    }
+
     public void commitRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
-        JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader(dataFilePath))
-        {
-            JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
-            JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
-            JSONObject singleRoom = jsonHandler.getAttributeAsJsonObject( rooms.get(request.getRoomId() - 1));
-            JSONArray reservations = jsonHandler.getAttributeAsJsonArray(singleRoom.get("Reservations"));
-            JSONObject reservation = new JSONObject();
-            reservation.put("Id", request.getId());
-            reservation.put("StartTime", request.getStartTime().getTime());
-            reservation.put("EndTime", request.getEndTime().getTime());
-            reservations.add(reservation);
-            try (FileWriter file = new FileWriter(dataFilePath)) {
-                file.write(roomsData.toJSONString());
-                file.flush();
-            } catch (IOException e) {
+        if(request != null) {
+            JSONParser jParser = new JSONParser();
+            try (FileReader reader = new FileReader(dataFilePath)) {
+                JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+                JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
+                JSONObject singleRoom = jsonHandler.getAttributeAsJsonObject(rooms.get(request.getRoomId() - 1));
+                JSONArray reservations = jsonHandler.getAttributeAsJsonArray(singleRoom.get("Reservations"));
+                JSONObject reservation = new JSONObject();
+                reservation.put("Id", request.getId());
+                reservation.put("StartTime", request.getStartTime().getTime());
+                reservation.put("EndTime", request.getEndTime().getTime());
+                reservations.add(reservation);
+                try (FileWriter file = new FileWriter(dataFilePath)) {
+                    file.write(roomsData.toJSONString());
+                    file.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (ParseException | IOException e) {
                 e.printStackTrace();
             }
-        } catch (ParseException | IOException e) {
-            e.printStackTrace();
+            this.removeRequestFromList(bookingId);
         }
-        this.removeRequestFromList(bookingId);
     }
 
     public void roolbackRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
-        if(request.getState().equals(StatusTypes.READY) ) {
-            roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        if(request != null) {
+            if (request.getState().equals(StatusTypes.READY)) {
+                roomList.get(request.getRoomId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+            }
+            this.removeRequestFromList(bookingId);
         }
-        this.removeRequestFromList(bookingId);
     }
 
     private RoomRequest getRequest(String bookingId) {

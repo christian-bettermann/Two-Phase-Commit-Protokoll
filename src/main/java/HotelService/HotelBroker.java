@@ -104,7 +104,17 @@ public class HotelBroker implements Runnable {
 					if(statusMessage.equals("InitialMessageRequest")) {
 						response = msgFactory.buildConnectionTest(msg.getBookingID(), "HiFromHotel", localAddress, hotelBrokerPort);
 					}
-					break;	
+					break;
+				case INQUIRE:
+					if(hotel.inquireMessage(msg.getBookingID())) {
+						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", localAddress, hotelBrokerPort);
+					} else {
+						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
+					}
+					break;
+				case THROWAWAY:
+					this.hotel.roolbackRequestOfBookingID(msg.getBookingID());
+					break;
 				default:
 					response = msgFactory.buildError(null, "ERROR ID_FormatException", localAddress, hotelBrokerPort);
 					break;

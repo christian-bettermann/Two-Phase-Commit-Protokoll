@@ -48,38 +48,50 @@ public class CarPool {
         }
     }
 
+    public boolean inquireMessage(String bookingId) {
+        boolean result = false;
+        CarRequest request = getRequest(bookingId);
+        if(request.getState().equals(StatusTypes.READY)) {
+            result = true;
+        }
+        return result;
+    }
+
     public void commitRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
-        JSONParser jParser = new JSONParser();
-        try (FileReader reader = new FileReader(dataFilePath))
-        {
-            JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
-            JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
-            JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(request.getCarId() - 1));
-            JSONArray reservations = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
-            JSONObject reservation = new JSONObject();
-            reservation.put("Id", request.getId());
-            reservation.put("StartTime", request.getStartTime().getTime());
-            reservation.put("EndTime", request.getEndTime().getTime());
-            reservations.add(reservation);
-            try (FileWriter file = new FileWriter(dataFilePath)) {
-                file.write(carsData.toJSONString());
-                file.flush();
-            } catch (IOException e) {
+        if(request != null) {
+            JSONParser jParser = new JSONParser();
+            try (FileReader reader = new FileReader(dataFilePath)) {
+                JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+                JSONArray cars = jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
+                JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(request.getCarId() - 1));
+                JSONArray reservations = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
+                JSONObject reservation = new JSONObject();
+                reservation.put("Id", request.getId());
+                reservation.put("StartTime", request.getStartTime().getTime());
+                reservation.put("EndTime", request.getEndTime().getTime());
+                reservations.add(reservation);
+                try (FileWriter file = new FileWriter(dataFilePath)) {
+                    file.write(carsData.toJSONString());
+                    file.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (IOException | ParseException e) {
                 e.printStackTrace();
             }
-        } catch (IOException | ParseException e) {
-            e.printStackTrace();
+            removeRequestFromList(bookingID);
         }
-        removeRequestFromList(bookingID);
     }
 
     public void roolbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
-        if(request.getState().equals(StatusTypes.READY) ) {
-            carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+        if(request != null) {
+            if (request.getState().equals(StatusTypes.READY)) {
+                carList.get(request.getCarId() - 1).removeBooking(request.getStartTime(), request.getEndTime());
+            }
+            this.removeRequestFromList(bookingID);
         }
-        this.removeRequestFromList(bookingID);
     }
 
     private CarRequest getRequest(String bookingId) {
