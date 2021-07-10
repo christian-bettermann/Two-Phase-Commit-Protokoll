@@ -199,15 +199,20 @@ public class ServerMessageHandler implements Runnable{
 					if(request.bothReady()) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 					}
-					//resend ROLLBACK
-					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
+					//resend
+					if(request.getCarBrokerState().equals(StatusTypes.ABORT) && request.getHotelBrokerState().equals(StatusTypes.ABORT)) {
+						response = msgFactory.buildRollback(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
+						break;	
+					}
+					//resend PREPARE
+					if(request.getCarBrokerState().equals(StatusTypes.ABORT) || request.getHotelBrokerState().equals(StatusTypes.ABORT) || request.getCarBrokerState().equals(StatusTypes.INITIALIZED) || request.getHotelBrokerState().equals(StatusTypes.INITIALIZED)) {
 						if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 							response = msgFactory.buildPrepare(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
 						if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 							response = msgFactory.buildPrepare(msg.getBookingID(), request.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
-					}			
+					}
 					break;
 				case ACKNOWLEDGMENT:
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
