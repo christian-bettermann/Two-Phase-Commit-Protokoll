@@ -130,10 +130,10 @@ public class Client implements Runnable {
 		JLabel c = new JLabel("Car:");
 		JLabel r = new JLabel("Room:");
 	    	    
-	    c.setBounds(160, 25, 90, 20);
-	    r.setBounds(260, 25, 90, 20);
-	    cars.setBounds(160, 50, 90, 20);    
-	    rooms.setBounds(260, 50, 190, 20); 
+	    c.setBounds(50, 25, 225, 20);
+	    r.setBounds(300, 25, 225, 20);
+	    cars.setBounds(50, 50, 250, 20);    
+	    rooms.setBounds(300, 50, 250, 20); 
 	    
 	    f.add(c);
 	    f.add(r);
@@ -237,23 +237,22 @@ public class Client implements Runnable {
 		try {
 			switch(msg.getStatus()) {
 				case BOOKING:
-					textArea.append("=> Server RECEIVED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+					textArea.append("=> Server RECEIVED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ (new Date(msg.getStatusMessageStartTime()).getMonth() + 1) +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ (new Date(msg.getStatusMessageEndTime()).getMonth() + 1) +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
 					response = null;
 					break;
-				case ACKNOWLEDGMENT:
-					textArea.append("=> Server CHECKED & COMMITTED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
-					
+				case COMMIT:
+					textArea.append("=> Server COMMITTED Booking Request <BookingID: "+ msg.getBookingID() +">\n\n");
+					response = null;
+					break;
+				case ROLLBACK:
+					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +" InfoMessage: "+ msg.getStatusMessage() +">\n\n");
 					response = null;
 					break;
 				case ERROR:
 					if(msg.getStatusMessage().equals("ERROR_Invalid_Booking")) {
-						textArea.append("=> Server received invalid Booking Request\n\n");
-						
-					} else {
-						textArea.append("=> Server CHECKED & DENIED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ new Date(msg.getStatusMessageStartTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ new Date(msg.getStatusMessageEndTime()).getMonth() +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+						textArea.append("=> Server received an invalid Booking Request (check dates)\n\n");
 						
 					}
-					
 					response = null;
 					break;
 				default:

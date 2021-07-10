@@ -2,6 +2,7 @@ package Request;
 
 import Message.StatusTypes;
 
+import java.net.InetAddress;
 import java.util.Date;
 
 public class ServerRequest extends Request{
@@ -11,14 +12,18 @@ public class ServerRequest extends Request{
     private int messageCounter;
     private StatusTypes stateOfCarBroker;
     private StatusTypes stateOfHotelBroker;
+    private InetAddress clientAddress;
+    private int clientPort;
 
-    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime) {
+    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort) {
         this.id = pBookingId;
         this.carId = pCarId;
         this.roomId = pRoomId;
         this.messageCounter = 0;
         this.startTime = pStartTime;
         this.endTime = pEndTime;
+        this.clientAddress = clientAddress;
+        this.clientPort = clientPort;
         this.stateOfCarBroker = StatusTypes.INITIALIZED;
         this.stateOfHotelBroker = StatusTypes.INITIALIZED;
     }
@@ -56,8 +61,16 @@ public class ServerRequest extends Request{
     public void resetMessageCounter() {
         this.messageCounter = 0;
     }
+    
+    public InetAddress getClientAddress() {
+		return clientAddress;
+	}
 
-    public boolean bothReady() {
+	public int getClientPort() {
+		return clientPort;
+	}
+
+	public boolean bothReady() {
         if(this.stateOfCarBroker.equals(StatusTypes.READY) && this.stateOfHotelBroker.equals(StatusTypes.READY)) {
             return true;
         } else {
