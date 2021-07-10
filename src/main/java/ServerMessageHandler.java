@@ -24,15 +24,15 @@ import org.json.simple.parser.ParseException;
 public class ServerMessageHandler implements Runnable{
 	//Attribute
 	private final int id;
-	private MessageFactory msgFactory;
+	protected MessageFactory msgFactory;
 	private final String requestFilePath;
 	private final JsonHandler jsonHandler;
 	private static final Logger logger = LogManager.getRootLogger();
-	private final DatagramSocket socket;
+	protected final DatagramSocket socket;
 	private final BlockingQueue<Message> incomingMessages;
-	private final String name;
+	protected final String name;
 	private Boolean online;
-	private final Server server;
+	protected final Server server;
 	private final ArrayList<ServerRequest> requestList;
 	
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
@@ -52,6 +52,8 @@ public class ServerMessageHandler implements Runnable{
 		logger.info("Starting <" + name + "> for port <" + socket.getLocalPort() + ">...");
 		online = true;
 		ServerMessageHandlerTimeChecker smhtc = new ServerMessageHandlerTimeChecker(this);
+		Thread smhtcThread = new Thread(smhtc);
+		smhtcThread.start();
 		while (online) {
         	try {
 				Message inMsg = incomingMessages.take();
@@ -88,11 +90,12 @@ public class ServerMessageHandler implements Runnable{
 						String timestamp = String.valueOf(new Date().getTime());
 						String newBookingID = server.getName()+ "_" + timestamp + "_" + uniqueID;
 						response = msgFactory.buildBooking(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
+						
 						Message prepareMsgCar = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						answerParticipant(prepareMsgCar, server.getCarBroker().getAddress(),server.getCarBroker().getPort());
 						Message prepareMsgHotel = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						answerParticipant(prepareMsgHotel, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
-						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageRoomId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()), msg.getSenderAddress(), msg.getSenderPort());
+						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageRoomId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()), msg.getSenderAddress(), msg.getSenderPort(), new Date());
 					} else {
 						response = msgFactory.buildError(null, "ERROR_Invalid_Booking", InetAddress.getLocalHost(), socket.getLocalPort());
 					}
@@ -226,8 +229,8 @@ public class ServerMessageHandler implements Runnable{
 		return response;
 	}
 
-	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime, InetAddress clientAddress, int clientPort) {
-		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort));
+	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime, InetAddress clientAddress, int clientPort, Date timestamp) {
+		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort, timestamp));
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
@@ -241,6 +244,7 @@ public class ServerMessageHandler implements Runnable{
 			serverRequest.put("RoomId", roomId);
 			serverRequest.put("StartTime", startTime.getTime());
 			serverRequest.put("EndTime", endTime.getTime());
+			serverRequest.put("Timestamp", timestamp.getTime());
 			serverRequest.put("ClientAddress", clientAddress.getHostAddress());
 			serverRequest.put("ClientPort", clientPort);
 			serverRequest.put("CarState", StatusTypes.INITIALIZED.toString());
@@ -257,6 +261,39 @@ public class ServerMessageHandler implements Runnable{
 		}
 	}
 
+	protected void updateRequestTimestamp(String bookingId, Date newTimestamp) {
+		ServerRequest request = getRequest(bookingId);
+		boolean updated = false;
+		if(request.getTimestamp().before(newTimestamp)) {
+			request.setTimestamp(newTimestamp);
+		}
+		JSONParser jParser = new JSONParser();
+		try (FileReader reader = new FileReader(this.requestFilePath)) {
+			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+			JSONArray serverRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("ServerRequests"));
+			for(int i = 0; i < serverRequests.size(); i++) {
+				JSONObject singleRequest = jsonHandler.getAttributeAsJsonObject(serverRequests.get(i));
+				if(singleRequest.get("BookingId").toString().equals(bookingId)) {
+					if(new Date(Long.parseLong(singleRequest.get("Timestamp").toString())).before(newTimestamp)) {
+						singleRequest.replace("Timestamp", newTimestamp.getTime());
+						updated = true;
+					}
+					if (updated) {
+						break;
+					}
+				}
+			}
+			try (FileWriter file = new FileWriter(this.requestFilePath)) {
+				file.write(requestsData.toJSONString());
+				file.flush();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		} catch (IOException | ParseException e) {
+			e.printStackTrace();
+		}
+	}
+	
 	private void updateRequestAtList(String bookingId, StatusTypes carState, StatusTypes hotelState) {
 		ServerRequest request = getRequest(bookingId);
 		boolean updated = false;
@@ -344,7 +381,8 @@ public class ServerMessageHandler implements Runnable{
 					InetAddress.getByName(requestInfo.get("ClientAddress").toString()),
 					Integer.parseInt(requestInfo.get("clientPort").toString()),
 					StatusTypes.valueOf(requestInfo.get("CarState").toString()),
-					StatusTypes.valueOf(requestInfo.get("HotelState").toString())
+					StatusTypes.valueOf(requestInfo.get("HotelState").toString()),
+					new Date(Long.parseLong(requestInfo.get("Timestamp").toString()))
 				);
 				this.requestList.add(singleServerRequest);
 			}
@@ -374,6 +412,10 @@ public class ServerMessageHandler implements Runnable{
 		return request;
 	}
 
+	public ArrayList<ServerRequest> getRequestList() {
+		return requestList;
+	}
+	
 	private void answerParticipant(Message msg, InetAddress clientAddress, int clientPort) {
 		DatagramPacket dp = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, clientAddress, clientPort);
 		logger.trace("<" + name + "> sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
