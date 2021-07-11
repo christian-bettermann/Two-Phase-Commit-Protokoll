@@ -458,7 +458,8 @@ public class ServerMessageHandler implements Runnable{
 					Integer.parseInt(requestInfo.get("ClientPort").toString()),
 					StatusTypes.valueOf(requestInfo.get("CarState").toString()),
 					StatusTypes.valueOf(requestInfo.get("HotelState").toString()),
-					new Date(Long.parseLong(requestInfo.get("Timestamp").toString()))
+					new Date(Long.parseLong(requestInfo.get("Timestamp").toString())),
+					StatusTypes.valueOf(requestInfo.get("GlobalState").toString())
 				);
 				this.requestList.add(singleServerRequest);
 			}
