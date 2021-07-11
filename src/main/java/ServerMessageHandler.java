@@ -103,6 +103,10 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case READY:
+					if(getRequest(msg.getBookingID()) == null) {
+						logger.trace("2PC already finished, throw away message: " + msg.toString());
+						break;
+					}
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("CARBROKER MESSAGE READY!");
@@ -145,6 +149,10 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case ABORT:
+					if(getRequest(msg.getBookingID()) == null) {
+						logger.trace("2PC already finished, throw away message: " + msg.toString());
+						break;
+					}
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						updateRequestTimestamp(msg.getBookingID(), new Date());
 						logger.info("CARBROKER MESSAGE ABORT!");
@@ -169,6 +177,10 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case INQUIRE:
+					if(getRequest(msg.getBookingID()) == null) {
+						logger.trace("2PC already finished, throw away message: " + msg.toString());
+						break;
+					}
 					updateRequestTimestamp(msg.getBookingID(), new Date());
 					if(this.getRequest(msg.getBookingID()) == null) {
 						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -194,6 +206,10 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case ACKNOWLEDGMENT:
+					if(getRequest(msg.getBookingID()) == null) {
+						logger.trace("2PC already finished, throw away message: " + msg.toString());
+						break;
+					}
 					if(messageFromCarBroker(msg.getSenderAddress(), msg.getSenderPort())) {
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ACKNOWLEDGMENT, null, null);
 						if(this.getRequest(msg.getBookingID()).bothAcknowledged()) {
@@ -311,6 +327,9 @@ public class ServerMessageHandler implements Runnable{
 	}
 	
 	private void updateRequestAtList(String bookingId, StatusTypes carState, StatusTypes hotelState, StatusTypes globalState) {
+		if(getRequest(bookingId) == null) {
+			return;
+		}
 		try {
 			sem.acquire();
 		} catch (InterruptedException e1) {
