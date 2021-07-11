@@ -12,12 +12,13 @@ public class ServerRequest extends Request{
     private int messageCounter;
     private StatusTypes stateOfCarBroker;
     private StatusTypes stateOfHotelBroker;
+    private StatusTypes globalState;
     private InetAddress clientAddress;
     private int clientPort;
     private Date timestamp;
     private int inquireCounter;
 
-    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort, StatusTypes carState, StatusTypes hotelState, Date pTimestamp) {
+    public ServerRequest(String pBookingId, int pCarId, int pRoomId, Date pStartTime, Date pEndTime, InetAddress clientAddress, int clientPort, StatusTypes carState, StatusTypes hotelState, Date pTimestamp, StatusTypes pGlobalState) {
         this.id = pBookingId;
         this.carId = pCarId;
         this.roomId = pRoomId;
@@ -29,6 +30,7 @@ public class ServerRequest extends Request{
         this.timestamp = pTimestamp;
         this.stateOfCarBroker = carState;
         this.stateOfHotelBroker = hotelState;
+        this.globalState = pGlobalState;
         this.inquireCounter = 0;
     }
 
@@ -50,12 +52,20 @@ public class ServerRequest extends Request{
         this.messageCounter++;
     }
 
+    public void setGlobalState(StatusTypes pState) {
+        this.globalState = pState;
+    }
+
     public StatusTypes getHotelBrokerState() {
         return this.stateOfHotelBroker;
     }
 
     public StatusTypes getCarBrokerState() {
         return this.stateOfCarBroker;
+    }
+
+    public StatusTypes getGlobalState() {
+        return this.globalState;
     }
 
     public int getMessageCounter() {
