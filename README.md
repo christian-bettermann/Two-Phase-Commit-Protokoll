@@ -3,6 +3,10 @@ Message-Format:
 * public Message(StatusTypes statusCode, InetAddress senderAddress, int senderPort, int bookingID, String statusMessage)
 
 Implemented StatusTypes:
+* INFO
+* INFOCARS
+* INFOROOMS
+* INITIALIZED
 * BOOKING
 * PREPARE
 * READY
@@ -10,6 +14,7 @@ Implemented StatusTypes:
 * COMMIT
 * ROLLBACK
 * ACKNOWLEDGMENT
-* TESTING
 * ERROR
 * CONNECTIONTEST
+* INQUIRE
+* THROWAWAY
