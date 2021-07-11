@@ -90,8 +90,6 @@ public class HotelBroker implements Runnable {
 					} else {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
 					}
-					//logger.error("################################# Press Shutdown quickly #################################");
-					//TimeUnit.SECONDS.sleep(5);
 					break;
 				case COMMIT:
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
@@ -100,6 +98,8 @@ public class HotelBroker implements Runnable {
 				case ROLLBACK:
 					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
+					//logger.error("################################# Press Shutdown quickly #################################");
+					//TimeUnit.SECONDS.sleep(5);
 					break;
 				case ERROR:
 					break;
