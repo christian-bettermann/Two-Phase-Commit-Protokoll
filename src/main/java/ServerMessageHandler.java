@@ -10,6 +10,7 @@ import java.util.Date;
 import java.util.UUID;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 import JsonUtility.JsonHandler;
 import Message.*;
@@ -177,15 +178,11 @@ public class ServerMessageHandler implements Runnable{
 					}
 					break;
 				case INQUIRE:
-					if(getRequest(msg.getBookingID()) == null) {
-						logger.trace("2PC already finished, throw away message: " + msg.toString());
+					if(this.getRequest(msg.getBookingID()) == null) {
+						response = msgFactory.buildThrowaway(msg.getBookingID(), "Throwaway", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						break;
 					}
 					updateRequestTimestamp(msg.getBookingID(), new Date());
-					if(this.getRequest(msg.getBookingID()) == null) {
-						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
-						break;
-					}
 					//resend COMMIT
 					if(request.bothReady()) {
 						response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -287,6 +284,9 @@ public class ServerMessageHandler implements Runnable{
 	}
 
 	protected void updateRequestTimestamp(String bookingId, Date newTimestamp) {
+		if(this.getRequest(bookingId) == null) {
+			return;
+		}
 		try {
 			sem.acquire();
 		} catch (InterruptedException e1) {

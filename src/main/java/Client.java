@@ -251,6 +251,10 @@ public class Client implements Runnable {
 					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: "+ msg.getStatusMessage() +">\n\n");
 					response = null;
 					break;
+				case THROWAWAY:
+					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: Timeout>\n\n");
+					response = null;
+					break;
 				case ERROR:
 					if(msg.getStatusMessage().equals("ERROR_Invalid_Booking")) {
 						textArea.append("=> Server received an invalid Booking Request (check dates)\n\n");
