@@ -151,6 +151,7 @@ public class ControlPanel implements Runnable {
 		    	if(sone.getText().equals("Shutdown")) {
 		    		sone.setText("Start");
 		    		
+		    		serverOne.shutdownHandler();
 		    		serverOneThread.stop();
 		    		serverOneThread = null;
 		    		
@@ -189,6 +190,7 @@ public class ControlPanel implements Runnable {
 		    	if(stwo.getText().equals("Shutdown")) {
 		    		stwo.setText("Start");
 		    		
+		    		serverTwo.shutdownHandler();
 		    		serverTwoThread.stop();
 		    		serverTwoThread = null;
 		    		

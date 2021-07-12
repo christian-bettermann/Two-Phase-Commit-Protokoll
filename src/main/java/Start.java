@@ -13,21 +13,23 @@ public class Start {
 		Configurator.setRootLevel(Level.TRACE);
 
 		logger.info("Starting System...");
-		int clientPort = 33091;
+		int clientOnePort = 33091;
+		int clientTwoPort = 33092;
 		
 		//Start Brokers
 		CarBroker carBroker = new CarBroker();
 		HotelBroker hotelBroker = new HotelBroker();
 		Server serverOne = new Server(1);
 		Server serverTwo = new Server(2);
-		Client client = new Client(clientPort);
-		
+		Client clientOne = new Client(clientOnePort);
+		Client clientTwo = new Client(clientTwoPort);
 		
 		Thread serverOneThread = new Thread(serverOne);
 		Thread serverTwoThread = new Thread(serverTwo);
 		Thread carBrokerThread = new Thread(carBroker);
 		Thread hotelBrokerThread = new Thread(hotelBroker);
-		Thread clientThread = new Thread(client);
+		Thread clientOneThread = new Thread(clientOne);
+		Thread clientTwoThread = new Thread(clientTwo);
 		
 		ControlPanel controlPanel = new ControlPanel(serverOne, serverTwo, carBroker, hotelBroker, serverOneThread, serverTwoThread, carBrokerThread, hotelBrokerThread) ;
 		Thread controlPanelThread = new Thread(controlPanel);
@@ -36,7 +38,8 @@ public class Start {
 		serverTwoThread.start();
 		carBrokerThread.start();
 		hotelBrokerThread.start();
-		clientThread.start();
+		clientOneThread.start();
+		clientTwoThread.start();
 		controlPanelThread.start();
 	}
 }

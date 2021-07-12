@@ -104,6 +104,10 @@ public class ServerRequest extends Request{
     	return inquireCounter;
     }
     
+    public void resetInquireCounter() {
+    	inquireCounter = 0;
+    }
+    
 	public boolean bothReady() {
         if(this.stateOfCarBroker.equals(StatusTypes.READY) && this.stateOfHotelBroker.equals(StatusTypes.READY)) {
             return true;

@@ -112,6 +112,8 @@ public class CarBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
+					logger.error("################################# Press Shutdown quickly THROWAWAY #################################");
+					TimeUnit.SECONDS.sleep(5);
 					this.pool.undoEverything(msg.getBookingID());
 					break;
 				default:

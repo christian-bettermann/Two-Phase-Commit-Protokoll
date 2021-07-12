@@ -245,7 +245,7 @@ public class Hotel {
 
     public void undoEverything(String bookingId) {
        RoomRequest request = getRequest(bookingId);
-        int carId = -1;
+        int roomId = -1;
         Date startTime = null;
         Date endTime = null;
         if(request != null) {
@@ -254,24 +254,24 @@ public class Hotel {
             JSONParser jParser = new JSONParser();
             try (FileReader reader = new FileReader(dataFilePath))
             {
-                JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
-                JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("rooms"));
-                for(int i = 0; i < cars.size(); i++) {
-                    JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(i));
-                    JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
+                JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+                JSONArray rooms= jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
+                for(int i = 0; i < rooms.size(); i++) {
+                    JSONObject singleRoom = jsonHandler.getAttributeAsJsonObject(rooms.get(i));
+                    JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleRoom.get("Reservations"));
                     for(int j = 0; j < reservationJsonArray.size(); j++) {
                         JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
                         if (singleBookingData.get("Id").toString().equals(bookingId)) {
-                            carId = Integer.parseInt(singleBookingData.get("Id").toString());
+                            roomId = i;
                             startTime = new Date(Long.parseLong(singleBookingData.get("StartTime").toString()));
                             endTime = new Date(Long.parseLong(singleBookingData.get("EndTime").toString()));
-                            reservationJsonArray.remove(i);
+                            reservationJsonArray.remove(j);
                             break;
                         }
                     }
                 }
                 try (FileWriter file = new FileWriter(dataFilePath)) {
-                    file.write(carsData.toJSONString());
+                    file.write(roomsData.toJSONString());
                     file.flush();
                 } catch (IOException e) {
                     e.printStackTrace();
@@ -279,8 +279,8 @@ public class Hotel {
             } catch (ParseException | IOException e) {
                 e.printStackTrace();
             }
-            if(carId != - 1) {
-                this.roomList.get(carId - 1).removeBooking(startTime, endTime);
+            if(roomId != -1) {
+                this.roomList.get(roomId).removeBooking(startTime, endTime);
             }
         }
     }

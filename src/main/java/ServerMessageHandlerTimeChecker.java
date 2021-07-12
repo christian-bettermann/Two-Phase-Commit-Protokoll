@@ -29,7 +29,7 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 				if(req.getTimestamp().getTime()  + 5 * 1000 < new Date().getTime()) {
 					try {
 						req.increaseInquireCounter();
-						if(req.getInquireCounter() >= 6) {
+						if(req.getInquireCounter() >= 6 && !(req.getGlobalState().equals(StatusTypes.COMMIT))) {
 							Message throwawayMsgCar = smh.msgFactory.buildThrowaway(req.getId(), "Throwaway", InetAddress.getLocalHost(), smh.socket.getLocalPort());
 							DatagramPacket throwawayPacketCar = new DatagramPacket(throwawayMsgCar.toString().getBytes(), throwawayMsgCar.toString().getBytes().length, smh.server.getCarBroker().getAddress(), smh.server.getCarBroker().getPort());
 							logger.trace("<" + smh.name + "> sent: <" + new String(throwawayPacketCar.getData(), 0, throwawayPacketCar.getLength()) + ">");
