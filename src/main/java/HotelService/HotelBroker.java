@@ -85,6 +85,8 @@ public class HotelBroker implements Runnable {
 					response = null;
 					break;
 				case PREPARE:
+					//logger.error("################################# Press Shutdown quickly PREPARE #################################");
+					//TimeUnit.SECONDS.sleep(5);
 					if(this.hotel.checkRoomOfId(msg.getSenderAddress(), msg.getSenderPort(), msg.getBookingID(), Integer.parseInt(msg.getStatusMessageRoomId()),new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()))) {
 						response = msgFactory.buildReady(msg.getBookingID(), "HotelRoomIsFree", localAddress, hotelBrokerPort);
 					} else {
@@ -98,8 +100,6 @@ public class HotelBroker implements Runnable {
 				case ROLLBACK:
 					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, hotelBrokerPort);
-					//logger.error("################################# Press Shutdown quickly #################################");
-					//TimeUnit.SECONDS.sleep(5);
 					break;
 				case ERROR:
 					break;

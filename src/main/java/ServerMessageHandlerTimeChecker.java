@@ -26,10 +26,10 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 			Iterator<ServerRequest> smhrlit = smhrl.iterator();
 			while(smhrlit.hasNext()) {
 				ServerRequest req = smhrlit.next();
-				if(req.getTimestamp().getTime()  + 20 * 1000 < new Date().getTime()) {
+				if(req.getTimestamp().getTime()  + 5 * 1000 < new Date().getTime()) {
 					try {
 						req.increaseInquireCounter();
-						if(req.getInquireCounter() >= 30) {
+						if(req.getInquireCounter() >= 6) {
 							smh.removeRequestFromList(req.getId());
 						} else {
 							logger.trace("InquireCounter: "+ req.getInquireCounter());
