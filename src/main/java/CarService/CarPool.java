@@ -263,7 +263,7 @@ public class CarPool {
                             carId = Integer.parseInt(singleBookingData.get("Id").toString());
                             startTime = new Date(Long.parseLong(singleBookingData.get("StartTime").toString()));
                             endTime = new Date(Long.parseLong(singleBookingData.get("EndTime").toString()));
-                            reservationJsonArray.remove(i);
+                            reservationJsonArray.remove(j);
                             break;
                         }
                     }
