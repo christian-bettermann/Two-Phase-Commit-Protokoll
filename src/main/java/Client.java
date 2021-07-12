@@ -208,6 +208,7 @@ public class Client implements Runnable {
 		    }
 		});
 		
+		logger.info("======================================================================================");
 		//start receiving from servers
 		boolean online = true;
         while (online) {
@@ -218,7 +219,7 @@ public class Client implements Runnable {
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
-	            logger.info("Client received: <"+ received.toString() +">");
+	            logger.info("Client received:	<"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
@@ -283,6 +284,7 @@ public class Client implements Runnable {
 	public void sendBooking(String carID, String hotelID, String startTime, String endTime) {
 		setSelectedServerPort(bg);
 		Message m = new Message(StatusTypes.BOOKING, localAddress, localPort, "0", buildStatusMessage(carID, hotelID, startTime, endTime));
+		logger.info("#####################################################################################################################################");
         logger.info("Trying to book the trip from "+ new Date(m.getStatusMessageStartTime()) +" until "+ new Date(m.getStatusMessageEndTime()) +" with the car "+ carID +" and the hotel "+ hotelID +".");
         DatagramPacket booking = new DatagramPacket(m.toString().getBytes(), m.toString().getBytes().length, serverAddress, serverPort);
 	    try {
