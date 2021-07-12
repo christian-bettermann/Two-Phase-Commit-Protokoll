@@ -94,7 +94,7 @@ public class CarBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenBooked", localAddress, carBrokerPort);
 					break;
 				case ROLLBACK:
-					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					this.pool.rollbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					break;
 				case ERROR:
@@ -112,7 +112,7 @@ public class CarBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
-					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					this.pool.undoEverything(msg.getBookingID());
 					break;
 				default:
 					response = msgFactory.buildError(null,  "ERROR ID_FormatException", localAddress, carBrokerPort);

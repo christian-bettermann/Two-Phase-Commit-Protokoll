@@ -86,7 +86,7 @@ public class CarPool {
         }
     }
 
-    public void roolbackRequestOfBookingID(String bookingID) {
+    public void rollbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         if(request != null) {
             if (request.getState().equals(StatusTypes.READY)) {
@@ -225,6 +225,48 @@ public class CarPool {
             }
         } catch (ParseException | IOException e) {
             e.printStackTrace();
+        }
+    }
+
+    public void undoEverything(String bookingId) {
+        CarRequest request = getRequest(bookingId);
+        int carId = -1;
+        Date startTime = null;
+        Date endTime = null;
+        if(request != null) {
+            this.rollbackRequestOfBookingID(bookingId);
+        } else {
+            JSONParser jParser = new JSONParser();
+            try (FileReader reader = new FileReader(dataFilePath))
+            {
+                JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+                JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
+                for(int i = 0; i < cars.size(); i++) {
+                    JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(i));
+                    JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
+                    for(int j = 0; j < reservationJsonArray.size(); j++) {
+                        JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
+                        if (singleBookingData.get("Id").toString().equals(bookingId)) {
+                            carId = Integer.parseInt(singleBookingData.get("Id").toString());
+                            startTime = new Date(Long.parseLong(singleBookingData.get("StartTime").toString()));
+                            endTime = new Date(Long.parseLong(singleBookingData.get("EndTime").toString()));
+                            reservationJsonArray.remove(i);
+                            break;
+                        }
+                    }
+                }
+                try (FileWriter file = new FileWriter(dataFilePath)) {
+                    file.write(carsData.toJSONString());
+                    file.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (ParseException | IOException e) {
+                e.printStackTrace();
+            }
+            if(carId != - 1) {
+                this.carList.get(carId - 1).removeBooking(startTime, endTime);
+            }
         }
     }
 

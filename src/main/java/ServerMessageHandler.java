@@ -116,16 +116,16 @@ public class ServerMessageHandler implements Runnable{
 							logger.info("RESULT => COMMIT!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.COMMIT);
-							Message answerForHotelBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							Message answerForHotelBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
-							response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						} else if(request.getHotelBrokerState().equals(StatusTypes.ABORT) && request.getMessageCounter() >= 2) {
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
-							Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
-							response = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							response = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
 					}
 					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
@@ -136,16 +136,16 @@ public class ServerMessageHandler implements Runnable{
 							logger.info("RESULT => COMMIT!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.COMMIT);
-							Message answerForCarBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							Message answerForCarBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
-							response = msgFactory.buildCommit(msg.getBookingID(), "OkThanBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						} else if(request.getCarBrokerState().equals(StatusTypes.ABORT) && request.getMessageCounter() >= 2) {
 							logger.info("RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
-							Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
-							response = msgFactory.buildRollback(msg.getBookingID(), "OkThanRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							response = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						}
 					}
 					break;
@@ -474,10 +474,36 @@ public class ServerMessageHandler implements Runnable{
 		if(requestList.size() > 0) {
 			for(int i = 0; i < requestList.size(); i++) {
 				singleOldRequest = requestList.get(i);
-				Message msgForCarBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
-				answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
-				Message msgForHotelBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
-				answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+				if(singleOldRequest.getGlobalState() == StatusTypes.COMMIT) {
+					Message msgForCarBroker = msgFactory.buildCommit(singleOldRequest.getId(), "OkThenCommit", this.socket.getLocalAddress(), this.socket.getLocalPort());
+					answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
+					Message msgForHotelBroker = msgFactory.buildCommit(singleOldRequest.getId(), "OkThenCommit", this.socket.getLocalAddress(), this.socket.getLocalPort());
+					answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+				} else if(singleOldRequest.getGlobalState() == StatusTypes.ROLLBACK) {
+					Message msgForCarBroker = msgFactory.buildRollback(singleOldRequest.getId(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+					answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
+					Message msgForHotelBroker = msgFactory.buildRollback(singleOldRequest.getId(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
+					answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+				} else {
+					Message msgForCarBroker;
+					Message msgForHotelBroker;
+					switch(singleOldRequest.getCarBrokerState()) {
+						case INITIALIZED:
+							msgForCarBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
+							break;
+						default:
+							break;
+					}
+					switch(singleOldRequest.getHotelBrokerState()) {
+						case INITIALIZED:
+							msgForHotelBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+							break;
+						default:
+							break;
+					}
+				}
 			}
 		}
 		sem.release();
