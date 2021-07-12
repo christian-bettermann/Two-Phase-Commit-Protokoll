@@ -30,6 +30,21 @@ public class ServerMessageHandlerTimeChecker implements Runnable {
 					try {
 						req.increaseInquireCounter();
 						if(req.getInquireCounter() >= 6) {
+							Message throwawayMsgCar = smh.msgFactory.buildThrowaway(req.getId(), "Throwaway", InetAddress.getLocalHost(), smh.socket.getLocalPort());
+							DatagramPacket throwawayPacketCar = new DatagramPacket(throwawayMsgCar.toString().getBytes(), throwawayMsgCar.toString().getBytes().length, smh.server.getCarBroker().getAddress(), smh.server.getCarBroker().getPort());
+							logger.trace("<" + smh.name + "> sent: <" + new String(throwawayPacketCar.getData(), 0, throwawayPacketCar.getLength()) + ">");
+							smh.socket.send(throwawayPacketCar);
+							
+							Message throwawayMsgHotel = smh.msgFactory.buildThrowaway(req.getId(), "Throwaway", InetAddress.getLocalHost(), smh.socket.getLocalPort());
+							DatagramPacket throwawayPacketHotel = new DatagramPacket(throwawayMsgHotel.toString().getBytes(), throwawayMsgHotel.toString().getBytes().length, smh.server.getHotelBroker().getAddress(), smh.server.getHotelBroker().getPort());
+							logger.trace("<" + smh.name + "> sent: <" + new String(throwawayPacketHotel.getData(), 0, throwawayPacketHotel.getLength()) + ">");
+							smh.socket.send(throwawayPacketHotel);
+							
+							Message denyMsgClient = smh.msgFactory.buildThrowaway(req.getId(), "Timeout", InetAddress.getLocalHost(), smh.socket.getLocalPort());
+							DatagramPacket denyPacketClient = new DatagramPacket(denyMsgClient.toString().getBytes(), denyMsgClient.toString().getBytes().length, req.getClientAddress(), req.getClientPort());
+							logger.trace("<" + smh.name + "> sent: <" + new String(denyPacketClient.getData(), 0, denyPacketClient.getLength()) + ">");
+							smh.socket.send(denyPacketClient);
+							
 							smh.removeRequestFromList(req.getId());
 						} else {
 							logger.trace("InquireCounter: "+ req.getInquireCounter());

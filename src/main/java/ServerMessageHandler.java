@@ -179,7 +179,7 @@ public class ServerMessageHandler implements Runnable{
 					break;
 				case INQUIRE:
 					if(this.getRequest(msg.getBookingID()) == null) {
-						response = msgFactory.buildThrowaway(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
+						response = msgFactory.buildThrowaway(msg.getBookingID(), "Throwaway", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						break;
 					}
 					updateRequestTimestamp(msg.getBookingID(), new Date());
