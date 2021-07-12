@@ -35,6 +35,7 @@ public class Client implements Runnable {
 	int serverPort = 30800;
 	private JTextArea textArea;
 	private ButtonGroup bg;
+	private Long timestampBookingSent;
 	
 	public Client(int clientPort) {
 		logger.trace("Creating Client...");
@@ -227,6 +228,10 @@ public class Client implements Runnable {
         	} catch (SocketTimeoutException e) {
 	            //Timeout
 		    	logger.trace("ClientSocket timeout (no message received)!");
+		    	if(timestampBookingSent < new Date().getTime()) {
+		    		timestampBookingSent = Long.MAX_VALUE;
+		    		textArea.append("=> Could not reach Server, InfoMessage: Timeout>\n\n");
+		    	}
 	        }catch (IOException e) {
 				e.printStackTrace();
 			}
@@ -281,6 +286,7 @@ public class Client implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	    timestampBookingSent = new Date().getTime();
 	}  
 
 	public static String buildStatusMessage(String carID, String hotelID, String start, String end) {
