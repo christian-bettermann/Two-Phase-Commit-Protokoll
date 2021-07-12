@@ -110,7 +110,7 @@ public class CarBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
-					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					this.pool.undoEverything(msg.getBookingID());
 					break;
 				default:
 					response = msgFactory.buildError(null,  "ERROR ID_FormatException", localAddress, carBrokerPort);

@@ -228,6 +228,44 @@ public class CarPool {
         }
     }
 
+    public void undoEverything(String bookingId) {
+        CarRequest request = getRequest(bookingId);
+        int carId = -1;
+        Date startTime = null;
+        Date endTime = null;
+        if(request != null) {
+            this.roolbackRequestOfBookingID(bookingId);
+        } else {
+            JSONParser jParser = new JSONParser();
+            try (FileReader reader = new FileReader(requestsFilePath))
+            {
+                JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+                JSONArray carRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
+                for(int i = 0; i < carRequests.size(); i++) {
+                    JSONObject singleRequest = jsonHandler.getAttributeAsJsonObject(carRequests.get(i));
+                    if(singleRequest.get("BookingId").toString().equals(bookingId)) {
+                        carId = Integer.parseInt(singleRequest.get("CarId").toString());
+                        startTime = new Date(Long.parseLong(singleRequest.get("StartTime").toString()));
+                        endTime = new Date(Long.parseLong(singleRequest.get("EndTime").toString()));
+                        carRequests.remove(i);
+                        break;
+                    }
+                }
+                try (FileWriter file = new FileWriter(requestsFilePath)) {
+                    file.write(requestsData.toJSONString());
+                    file.flush();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            } catch (ParseException | IOException e) {
+                e.printStackTrace();
+            }
+            if(carId != -1) {
+                this.carList.get(carId -1).removeBooking(startTime, endTime);
+            }
+        }
+    }
+
     public ArrayList<CarRequest> getRequests() {
         return this.requestList;
     }
