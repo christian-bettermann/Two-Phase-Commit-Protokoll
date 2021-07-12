@@ -31,6 +31,8 @@ public class Server implements Runnable {
     boolean brokerToCheckOnline;
     Broker carBroker;
     Broker hotelBroker;
+    Thread incomingMessagesListHandler;
+    ServerMessageHandler serverMessageHandler;
     
 	public Server (int id) {
 		this.id = id;
@@ -117,8 +119,8 @@ public class Server implements Runnable {
 	}
 	
 	public void startMessageHandling() {
-		ServerMessageHandler serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
-		Thread incomingMessagesListHandler = new Thread(serverMessageHandler);
+		serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
+		incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
 		
 		while(online) {
@@ -167,5 +169,10 @@ public class Server implements Runnable {
 	
 	public void closeSocket() {
 		socket.close();
+	}
+	
+	public void shutdownHandler() {
+		serverMessageHandler.shutdownServerMessageTimeHandler();
+		incomingMessagesListHandler.stop();
 	}
 }

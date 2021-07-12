@@ -260,10 +260,10 @@ public class CarPool {
                     for(int j = 0; j < reservationJsonArray.size(); j++) {
                         JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
                         if (singleBookingData.get("Id").toString().equals(bookingId)) {
-                            carId = Integer.parseInt(singleBookingData.get("Id").toString());
+                            carId = i;
                             startTime = new Date(Long.parseLong(singleBookingData.get("StartTime").toString()));
                             endTime = new Date(Long.parseLong(singleBookingData.get("EndTime").toString()));
-                            reservationJsonArray.remove(i);
+                            reservationJsonArray.remove(j);
                             break;
                         }
                     }
@@ -277,8 +277,8 @@ public class CarPool {
             } catch (ParseException | IOException e) {
                 e.printStackTrace();
             }
-            if(carId != - 1) {
-                this.carList.get(carId - 1).removeBooking(startTime, endTime);
+            if(carId != -1) {
+                this.carList.get(carId).removeBooking(startTime, endTime);
             }
         }
     }

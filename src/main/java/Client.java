@@ -250,14 +250,17 @@ public class Client implements Runnable {
 					break;
 				case COMMIT:
 					textArea.append("=> Server COMMITTED Booking Request <BookingID: "+ msg.getBookingID() +">\n\n");
+					timestampBookingSent = Long.MAX_VALUE;
 					response = null;
 					break;
 				case ROLLBACK:
 					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: "+ msg.getStatusMessage() +">\n\n");
+					timestampBookingSent = Long.MAX_VALUE;
 					response = null;
 					break;
 				case THROWAWAY:
 					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: Timeout>\n\n");
+					timestampBookingSent = Long.MAX_VALUE;
 					response = null;
 					break;
 				case ERROR:
