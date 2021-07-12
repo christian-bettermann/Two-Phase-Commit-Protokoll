@@ -44,6 +44,7 @@ public class Client implements Runnable {
 	
 	public void run() {
 		logger.info("Starting Client on port <" + localPort + "> ...");
+		timestampBookingSent = Long.MAX_VALUE;
 		try {
 			localAddress = InetAddress.getLocalHost();
 			serverAddress = InetAddress.getLocalHost();
