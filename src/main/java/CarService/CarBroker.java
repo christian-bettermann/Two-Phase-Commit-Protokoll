@@ -92,7 +92,7 @@ public class CarBroker implements Runnable {
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenBooked", localAddress, carBrokerPort);
 					break;
 				case ROLLBACK:
-					this.pool.roolbackRequestOfBookingID(msg.getBookingID());
+					this.pool.rollbackRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					break;
 				case ERROR:

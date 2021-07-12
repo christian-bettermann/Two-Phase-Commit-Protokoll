@@ -116,7 +116,7 @@ public class HotelBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
-					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());
+					this.hotel.undoEverything(msg.getBookingID());
 					break;
 				default:
 					response = msgFactory.buildError(null, "ERROR ID_FormatException", localAddress, hotelBrokerPort);
