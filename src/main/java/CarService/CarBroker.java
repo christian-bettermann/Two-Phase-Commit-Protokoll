@@ -104,9 +104,9 @@ public class CarBroker implements Runnable {
 					break;
 				case INQUIRE:
 					if(pool.inquireMessage(msg.getBookingID())) {
-						response = msgFactory.buildReady(msg.getBookingID(), "CarIsFree", localAddress, carBrokerPort);
+						response = msgFactory.buildReady(msg.getBookingID(), "ReservationHasBeenBooked", localAddress, carBrokerPort);
 					} else {
-						response = msgFactory.buildAbort(msg.getBookingID(), "CarIsAlreadyBlocked", localAddress, carBrokerPort);
+						response = msgFactory.buildReady(msg.getBookingID(), "ReservationHasBeenDeleted", localAddress, carBrokerPort);
 					}
 					break;
 				case THROWAWAY:

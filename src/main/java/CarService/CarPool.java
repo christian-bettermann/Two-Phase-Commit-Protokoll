@@ -50,11 +50,24 @@ public class CarPool {
 
     public boolean inquireMessage(String bookingId) {
         boolean result = false;
-        CarRequest request = getRequest(bookingId);
-        if(request != null) {
-	        if(request.getState().equals(StatusTypes.READY)) {
-	            result = true;
-	        }
+        JSONParser jParser = new JSONParser();
+        try (FileReader reader = new FileReader(dataFilePath))
+        {
+            JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
+            for(int i = 0; i < cars.size(); i++) {
+                JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(i));
+                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
+                for(int j = 0; j < reservationJsonArray.size(); j++) {
+                    JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
+                    if (singleBookingData.get("Id").toString().equals(bookingId)) {
+                        result = true;
+                        break;
+                    }
+                }
+            }
+        } catch (ParseException | IOException e) {
+            e.printStackTrace();
         }
         return result;
     }
