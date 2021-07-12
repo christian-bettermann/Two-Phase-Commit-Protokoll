@@ -94,8 +94,6 @@ public class HotelBroker implements Runnable {
 				case COMMIT:
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
-					logger.error("################################# Press Shutdown quickly COMMIT #################################");
-					TimeUnit.SECONDS.sleep(5);
 					break;
 				case ROLLBACK:
 					this.hotel.rollbackRequestOfBookingID(msg.getBookingID());

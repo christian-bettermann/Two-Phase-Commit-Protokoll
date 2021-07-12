@@ -10,7 +10,7 @@ public class Start {
 	
 	public static void main(String[] args) {
 		//init logger
-		Configurator.setRootLevel(Level.TRACE);
+		Configurator.setRootLevel(Level.INFO);
 
 		logger.info("Starting System...");
 		int clientOnePort = 33091;
