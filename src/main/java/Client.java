@@ -26,16 +26,16 @@ import Message.*;
 
 
 public class Client implements Runnable {
-	private static final Logger logger = LogManager.getRootLogger();
-	private InetAddress localAddress;
-	private InetAddress serverAddress;
-	private DatagramSocket socket;
-	private byte[] buffer = new byte[1024];
-	int localPort;
-	int serverPort = 30800;
-	private JTextArea textArea;
-	private ButtonGroup bg;
-	private Long timestampBookingSent;
+	private static final Logger logger = LogManager.getRootLogger();	//shared logger
+	private InetAddress localAddress;									//own address
+	private DatagramSocket socket;										//UDP socket
+	private byte[] buffer = new byte[1024];								//buffer for datagram packages
+	int localPort;														//own port
+	private InetAddress serverAddress;									//serverAddress for initial information connection about offered cars and rooms
+	int serverPort = 30800;												//serverPort for initial information connection about offered cars and rooms
+	private JTextArea textArea;											//output panel for logs
+	private ButtonGroup bg;												//buttonGroup of RadioButtons for server selection
+	private Long timestampBookingSent;									//saves timestamp of the last booking that was sent to a server
 	
 	public Client(int clientPort) {
 		logger.trace("Creating Client...");
@@ -58,9 +58,11 @@ public class Client implements Runnable {
 			e.printStackTrace();
 		}
 		
+		//building message to request offered cars and rooms from brokers (over server)
 		Message getInfoMessage = new Message(StatusTypes.INFO, localAddress, socket.getLocalPort(), "0", localAddress +":"+ localPort);
     	DatagramPacket packet = new DatagramPacket(getInfoMessage.toString().getBytes(), getInfoMessage.toString().getBytes().length, serverAddress, serverPort);
 	    try {
+	    	//wait a little so everything is set up
 	    	TimeUnit.SECONDS.sleep(2);
 			socket.send(packet);
 		} catch (IOException e1) {
@@ -69,11 +71,13 @@ public class Client implements Runnable {
 			e1.printStackTrace();
 		}
 		
-	    JComboBox<String> cars = new JComboBox<String>();    
-	    JComboBox<String> rooms = new JComboBox<String>();  
+	    //building UI
+	    JComboBox<String> cars = new JComboBox<String>();    	//Dropdown with cars
+	    JComboBox<String> rooms = new JComboBox<String>();  	//Dropdown with rooms
 	    JSONArray carsJson = new JSONArray();
 	    JSONArray roomsJson = new JSONArray();
 	    int i = 0;
+	    //receive the two messages (one for the room information and one for the car information)
 	    while(i < 2) {
 	    	buffer = new byte[1024];
 	    	DatagramPacket response = new DatagramPacket(buffer, buffer.length);
@@ -84,6 +88,7 @@ public class Client implements Runnable {
 			    String responseString = new String(response.getData(), 0, response.getLength());
 			    Message responseMessage = new Message(responseString);
 			    
+			    //handling the car information message
 			    if(responseMessage.getStatus() == StatusTypes.INFOCARS) {
 			    	i++;
 			    	//parse responseMessage.getStatusMessage() to JSON and fill dropdown	    	
@@ -97,10 +102,12 @@ public class Client implements Runnable {
 			            car.put("HorsePower", info[3]);
 			            car.put("Type", info[4]);
 			            carsJson.add(car);
+			            //add item to dropdown
 			            cars.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2]);
 			    	}
 			    }
 			    
+			    //handling the room information message
 			    if(responseMessage.getStatus() == StatusTypes.INFOROOMS) {
 			    	i++;
 			    	//parse responseMessage.getStatusMessage() to JSON and fill dropdown
@@ -115,8 +122,10 @@ public class Client implements Runnable {
 			            room.put("Type", info[4]);
 			            roomsJson.add(room);
 			            if(Integer.parseInt(info[1]) > 1) {
+			            	//add item to dropdown
 			            	rooms.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2] +" Beds "+ info[4] +" Room");
 			            } else {
+			            	//add item to dropdown
 			            	rooms.addItem("#"+ info[0] +": "+ info[1] +" "+ info[2] +" Bed "+ info[4] +" Room");
 			            }
 			            
@@ -131,7 +140,9 @@ public class Client implements Runnable {
 
 		JFrame f = new JFrame();
 		f.setTitle("Client");
-		
+		f.setSize(610, 500);
+	    f.setLayout(null); 
+	    
 		JLabel c = new JLabel("Car:");
 		JLabel r = new JLabel("Room:");
 	    	    
@@ -139,19 +150,16 @@ public class Client implements Runnable {
 	    r.setBounds(300, 25, 225, 20);
 	    cars.setBounds(50, 50, 250, 20);    
 	    rooms.setBounds(300, 50, 250, 20); 
-	    
 	    f.add(c);
 	    f.add(r);
 	    f.add(cars);
 	    f.add(rooms);
-	       
-	    f.setSize(610, 500);
-	    f.setLayout(null); 
 	    
 		JButton b = new JButton("Send Booking");
 		b.setBounds(50, 400, 510, 40);		          
 		f.add(b); 
 
+		//DateChooser
 		JLabel st = new JLabel("Start date:");
 		st.setBounds(160, 100, 190, 20);
 		JDateChooser startDateChooser = new JDateChooser();
@@ -162,6 +170,7 @@ public class Client implements Runnable {
 		startDateChooser.setVisible(true);
 		st.setVisible(true);
 		
+		//DateChooser
 		JLabel et = new JLabel("End date:");
 		et.setBounds(160, 150, 190, 20);
 		JDateChooser endDateChooser = new JDateChooser();
@@ -172,6 +181,7 @@ public class Client implements Runnable {
 		et.setVisible(true);
 		endDateChooser.setVisible(true);
 		
+		//ButtonGroup with RadioButtons to choose the server the client sends the request to
 		bg = new ButtonGroup();
 		JLabel bglabel = new JLabel("Connecting to:");
 		bglabel.setBounds(160, 200, 100, 20);
@@ -185,6 +195,7 @@ public class Client implements Runnable {
 		f.add(rbsone);
 		f.add(rbstwo);
 		
+		//Output panel for logs
 		textArea = new JTextArea();
 		DefaultCaret caret = (DefaultCaret)textArea.getCaret();
 		caret.setUpdatePolicy(DefaultCaret.OUT_BOTTOM);
@@ -197,6 +208,7 @@ public class Client implements Runnable {
 		
 		f.setVisible(true);  
 		
+		//Listen for Button Press (= send booking request)
 		b.addActionListener(new ActionListener() {
 		    public void actionPerformed(ActionEvent e) {
 		    	String carID = String.valueOf(cars.getSelectedIndex() + 1);
@@ -208,8 +220,10 @@ public class Client implements Runnable {
 		    }
 		});
 		
+		//set up finished
 		logger.info("======================================================================================");
-		//start receiving from servers
+		
+		//start listening for messages from servers
 		boolean online = true;
         while (online) {
         	try {
@@ -218,8 +232,10 @@ public class Client implements Runnable {
 				socket.receive(dp);
 	            InetAddress address = dp.getAddress();
 	            int port = dp.getPort();
+	            //building message from received DatagramPacket
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()), address, port);
 	            logger.info("Client received:	<"+ received.toString() +">");
+	            //calculating the right response for this message
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
@@ -230,6 +246,7 @@ public class Client implements Runnable {
         	} catch (SocketTimeoutException e) {
 	            //Timeout
 		    	logger.trace("ClientSocket timeout (no message received)!");
+		    	//if client sent a booking and did not get a response yet, print an info to the output panel
 		    	if(timestampBookingSent < new Date().getTime()) {
 		    		timestampBookingSent = Long.MAX_VALUE;
 		    		textArea.append("=> Could not reach Server, InfoMessage: Timeout>\n\n");
@@ -241,34 +258,49 @@ public class Client implements Runnable {
         socket.close();
 	}
 	
-	//handle BOOKING & ACKNOWLEDGMENT & ERROR for bookingRequest
+	//calculating the right response for all valid message types that the client should receive
 	private Message analyzeAndGetResponse(Message msg) {
 		Message response = null;
 		try {
 			switch(msg.getStatus()) {
 				case BOOKING:
+					//the server received the booking request of the client and sends him the bookingId for his request back for information (bookingId is calculated by the server)
 					textArea.append("=> Server RECEIVED Booking Request <BookingID: "+ msg.getBookingID() +", CarID: "+ msg.getStatusMessageCarId() +", RoomID: "+ msg.getStatusMessageRoomId() +", StartTime: "+ new Date(msg.getStatusMessageStartTime()).getDate() +"-"+ (new Date(msg.getStatusMessageStartTime()).getMonth() + 1) +"-"+ (new Date(msg.getStatusMessageStartTime()).getYear() + 1900) +", EndTime: "+ new Date(msg.getStatusMessageEndTime()).getDate() +"-"+ (new Date(msg.getStatusMessageEndTime()).getMonth() + 1) +"-"+ (new Date(msg.getStatusMessageEndTime()).getYear() + 1900) +">\n\n");
+					//client does not need to answer on this
 					response = null;
 					break;
 				case COMMIT:
+					//the server decided to commit the booking request, the client is informed, that his request will be successfully committed => Request committed
 					textArea.append("=> Server COMMITTED Booking Request <BookingID: "+ msg.getBookingID() +">\n\n");
+					//reset timestamp for last booking send
 					timestampBookingSent = Long.MAX_VALUE;
+					//client does not need to answer on this
 					response = null;
 					break;
 				case ROLLBACK:
+					//the server decided to rollback the booking request, the client is informed, that his request will be rolled back by the brokers => Request denied
 					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: "+ msg.getStatusMessage() +">\n\n");
+					//reset timestamp for last booking send
 					timestampBookingSent = Long.MAX_VALUE;
+					//client does not need to answer on this
 					response = null;
 					break;
 				case THROWAWAY:
+					//the server decided to throw the request away because at least one broker is taking to long (may be down) => Request denied
 					textArea.append("=> Server DENIED Booking Request <BookingID: "+ msg.getBookingID() +", InfoMessage: Timeout>\n\n");
+					//reset timestamp for last booking send
 					timestampBookingSent = Long.MAX_VALUE;
+					//client does not need to answer on this
 					response = null;
 					break;
 				case ERROR:
+					//the server received an invalid booking request from the client (chosen times for booking request might be wrong)
 					if(msg.getStatusMessage().equals("ERROR_Invalid_Booking")) {
 						textArea.append("=> Server received an invalid Booking Request (check dates)\n\n");
 					}
+					//reset timestamp for last booking send
+					timestampBookingSent = Long.MAX_VALUE;
+					//client does not need to answer on this
 					response = null;
 					break;
 				default:
@@ -281,6 +313,7 @@ public class Client implements Runnable {
 		return response;
 	}
 	
+	//send a new booking request to the chosen server with all the information from the UI
 	public void sendBooking(String carID, String hotelID, String startTime, String endTime) {
 		setSelectedServerPort(bg);
 		Message m = new Message(StatusTypes.BOOKING, localAddress, localPort, "0", buildStatusMessage(carID, hotelID, startTime, endTime));
@@ -292,13 +325,16 @@ public class Client implements Runnable {
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
+	    //setting the timestamp for last booking send (to print something to the output panel if the client does not receive a response from the server)
 	    timestampBookingSent = new Date().getTime();
 	}  
 
+	//build a typical message with all the relevant information
 	public static String buildStatusMessage(String carID, String hotelID, String start, String end) {
 		return carID + "_" + hotelID + "_" + start + "_" + end;
 	}
 	
+	//update the local port variable by searching for the selected RadioButton
 	public void setSelectedServerPort(ButtonGroup buttonGroup) {
         for (Enumeration<AbstractButton> buttons = buttonGroup.getElements(); buttons.hasMoreElements();) {
             AbstractButton button = buttons.nextElement();
