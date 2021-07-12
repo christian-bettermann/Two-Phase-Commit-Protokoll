@@ -489,16 +489,24 @@ public class ServerMessageHandler implements Runnable{
 					Message msgForHotelBroker;
 					switch(singleOldRequest.getCarBrokerState()) {
 						case INITIALIZED:
-							msgForCarBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							msgForCarBroker = msgFactory.buildPrepare(singleOldRequest.getId(), singleOldRequest.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(msgForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
+							break;
+						case ACKNOWLEDGMENT:
+							msgForCarBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							answerParticipant(msgForCarBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 							break;
 						default:
 							break;
 					}
 					switch(singleOldRequest.getHotelBrokerState()) {
 						case INITIALIZED:
-							msgForHotelBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							msgForHotelBroker = msgFactory.buildPrepare(singleOldRequest.getId(), singleOldRequest.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(msgForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+							break;
+						case ACKNOWLEDGMENT:
+							msgForHotelBroker = msgFactory.buildInquire(singleOldRequest.getId(), "PlsSendAgain", this.socket.getLocalAddress(), this.socket.getLocalPort());
+							answerParticipant(msgForHotelBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 							break;
 						default:
 							break;
