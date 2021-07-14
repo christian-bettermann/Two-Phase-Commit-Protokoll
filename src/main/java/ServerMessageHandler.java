@@ -62,7 +62,7 @@ public class ServerMessageHandler implements Runnable{
         	try {
         		if(incomingMessages.size() > 0) {
 					Message inMsg = incomingMessages.take();
-					logger.info("<" + name + "> removed Message from Queue: <"+ inMsg.toString() +">");
+					logger.info("<" + name + "> removed Message from Queue:	<"+ inMsg.toString() +">");
 					Message outMsg = this.analyzeAndGetResponse(inMsg);
 					if(outMsg != null) {
 						DatagramPacket packet = new DatagramPacket(outMsg.toString().getBytes(), outMsg.toString().getBytes().length, inMsg.getSenderAddress(), inMsg.getSenderPort());
@@ -84,7 +84,7 @@ public class ServerMessageHandler implements Runnable{
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
-					logger.info("Handling Info message");
+					logger.trace("Handling Info message");
 					Message infoMsgCar = msgFactory.buildInfo("0", "GetInitialInfo", msg.getSenderAddress(), msg.getSenderPort());
 					answerParticipant(infoMsgCar, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 					Message infoMsgHotel = msgFactory.buildInfo("0", "GetInitialInfo", msg.getSenderAddress(), msg.getSenderPort());
@@ -117,17 +117,17 @@ public class ServerMessageHandler implements Runnable{
 							break;
 						}
 						updateRequestTimestamp(msg.getBookingID(), new Date());
-						logger.info("CARBROKER MESSAGE READY!");
+						logger.info("### CARBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.READY, null, null);
 						if(request.bothReady()) {
-							logger.info("RESULT => COMMIT!");
+							logger.info("### RESULT => COMMIT!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.COMMIT);
 							Message answerForHotelBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForHotelBroker, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
 							response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						} else if(request.getHotelBrokerState().equals(StatusTypes.ABORT) && request.getMessageCounter() >= 2) {
-							logger.info("RESULT => ROLLBACK!");
+							logger.info("### RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
 							Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -141,17 +141,17 @@ public class ServerMessageHandler implements Runnable{
 							break;
 						}
 						updateRequestTimestamp(msg.getBookingID(), new Date());
-						logger.info("HOTELBROKER MESSAGE READY!");
+						logger.info("### HOTELBROKER MESSAGE READY!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.READY, null);
 						if(request.bothReady()) {
-							logger.info("RESULT => COMMIT!");
+							logger.info("### RESULT => COMMIT!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.COMMIT);
 							Message answerForCarBroker = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 							answerParticipant(answerForCarBroker, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
 							response = msgFactory.buildCommit(msg.getBookingID(), "OkThenBook", this.socket.getLocalAddress(), this.socket.getLocalPort());
 						} else if(request.getCarBrokerState().equals(StatusTypes.ABORT) && request.getMessageCounter() >= 2) {
-							logger.info("RESULT => ROLLBACK!");
+							logger.info("### RESULT => ROLLBACK!");
 							request.resetMessageCounter();
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
 							Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -172,9 +172,9 @@ public class ServerMessageHandler implements Runnable{
 							break;
 						}
 						updateRequestTimestamp(msg.getBookingID(), new Date());
-						logger.info("CARBROKER MESSAGE ABORT!");
+						logger.info("### CARBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), StatusTypes.ABORT, null, null);
-						logger.info("RESULT => ROLLBACK!");
+						logger.info("### RESULT => ROLLBACK!");
 						request.resetMessageCounter();
 						this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
 						Message answerForHotelBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -187,9 +187,9 @@ public class ServerMessageHandler implements Runnable{
 							break;
 						}
 						updateRequestTimestamp(msg.getBookingID(), new Date());
-						logger.info("HOTELBROKER MESSAGE ABORT!");
+						logger.info("### HOTELBROKER MESSAGE ABORT!");
 						this.updateRequestAtList(msg.getBookingID(), null, StatusTypes.ABORT, null);
-						logger.info("RESULT => ROLLBACK!");
+						logger.info("### RESULT => ROLLBACK!");
 						request.resetMessageCounter();
 						this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ROLLBACK);
 						Message answerForCarBroker = msgFactory.buildRollback(msg.getBookingID(), "OkThenRollback", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -234,7 +234,7 @@ public class ServerMessageHandler implements Runnable{
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ACKNOWLEDGMENT);
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
-							logger.info("FINISHED 2PC");
+							logger.info("### FINISHED 2PC");
 						}
 					}
 					if(messageFromHotelBroker(msg.getSenderAddress(), msg.getSenderPort())) {
@@ -243,7 +243,7 @@ public class ServerMessageHandler implements Runnable{
 							this.updateRequestAtList(msg.getBookingID(), null, null, StatusTypes.ACKNOWLEDGMENT);
 							this.getRequest(msg.getBookingID()).resetMessageCounter();
 							this.removeRequestFromList(msg.getBookingID());
-							logger.info("FINISHED 2PC");
+							logger.info("### FINISHED 2PC");
 						}
 					}
 					break;

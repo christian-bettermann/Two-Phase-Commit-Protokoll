@@ -49,7 +49,7 @@ public class CarBroker implements Runnable {
 				InetAddress address = dp.getAddress();
 				int port = dp.getPort();
 	            Message received = new Message(new String(dp.getData(), 0, dp.getLength()));
-	            logger.info(brokerName + " received: <"+ received.toString() +">");
+	            logger.info(brokerName + " received:	<"+ received.toString() +">");
 				Message response = this.analyzeAndGetResponse(received);
 				if(response != null) {
 					buffer = response.toString().getBytes();
@@ -112,8 +112,7 @@ public class CarBroker implements Runnable {
 					}
 					break;
 				case THROWAWAY:
-					logger.error("################################# Press Shutdown quickly THROWAWAY #################################");
-					TimeUnit.SECONDS.sleep(5);
+					
 					this.pool.undoEverything(msg.getBookingID());
 					break;
 				default:
