@@ -249,7 +249,7 @@ public class Client implements Runnable {
 		    	//if client sent a booking and did not get a response yet, print an info to the output panel
 		    	if(timestampBookingSent < new Date().getTime()) {
 		    		timestampBookingSent = Long.MAX_VALUE;
-		    		textArea.append("=> Could not reach Server, InfoMessage: Timeout>\n\n");
+		    		textArea.append("=> Could not reach Server, InfoMessage: Timeout\n\n");
 		    	}
 	        }catch (IOException e) {
 				e.printStackTrace();

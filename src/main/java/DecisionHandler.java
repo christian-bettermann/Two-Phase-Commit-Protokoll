@@ -121,23 +121,28 @@ public class DecisionHandler {
         String bookingId = income.getBookingID();
         if(relatedRequest == null) {
             answer = msgFactory.buildThrowaway(bookingId, "Throwaway", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+            return answer;
         }
         msgHandler.updateRequestTimestamp(bookingId, new Date());
         //resend COMMIT
-        if(relatedRequest.bothReady()) {
+        if(relatedRequest.getGlobalState().equals(StatusTypes.COMMIT)) {
             answer = msgFactory.buildCommit(bookingId, "OkThenBook", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+            return answer;
         }
         //resend ROLLBACK
         if(relatedRequest.getGlobalState().equals(StatusTypes.ROLLBACK)) {
             answer = msgFactory.buildRollback(bookingId, relatedRequest.contentToString(), msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+            return answer;
         }
         //resend PREPARE
         if(relatedRequest.getCarBrokerState().equals(StatusTypes.ABORT) || relatedRequest.getHotelBrokerState().equals(StatusTypes.ABORT) || relatedRequest.getCarBrokerState().equals(StatusTypes.INITIALIZED) || relatedRequest.getHotelBrokerState().equals(StatusTypes.INITIALIZED)) {
             if(messageFromCarBroker(income.getSenderAddress(), income.getSenderPort())) {
                 answer = msgFactory.buildPrepare(bookingId, relatedRequest.contentToString(), msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+                return answer;
             }
             if(messageFromHotelBroker(income.getSenderAddress(), income.getSenderPort())) {
                 answer = msgFactory.buildPrepare(bookingId, relatedRequest.contentToString(), msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+                return answer;
             }
         }
         return answer;

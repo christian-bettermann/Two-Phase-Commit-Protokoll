@@ -91,7 +91,7 @@ public class HotelBroker implements Runnable {
 						response = msgFactory.buildAbort(msg.getBookingID(), "HotelRoomIsAlreadyBlocked", localAddress, hotelBrokerPort);
 					}
 					break;
-				case COMMIT:
+				case COMMIT:	
 					this.hotel.commitRequestOfBookingID(msg.getBookingID());
 					response = msgFactory.buildAcknowledge(msg.getBookingID(),"ReservationHasBeenBooked", localAddress, hotelBrokerPort);
 					break;
