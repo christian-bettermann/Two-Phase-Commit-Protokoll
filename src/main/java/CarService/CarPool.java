@@ -44,10 +44,12 @@ public class CarPool {
         CarRequest request = getRequest(bookingId);
         boolean result;
         if(request == null) {
+            //if request does not exists add it to list and check the avalaibility
             result = this.carList.get(carId - 1).checkAndBookIfFree(startTime, endTime);
             this.addRequestToList(target, port, bookingId, carId, startTime, endTime, result);
             return result;
         } else {
+            //if request does already exist check the result which was evaluated before
             StatusTypes state = request.getState();
             if(state.equals(StatusTypes.READY)) {
                 result = true;
@@ -231,6 +233,7 @@ public class CarPool {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
         {
+            //add request to stable storage
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray carRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
             JSONObject carRequest = new JSONObject();
@@ -242,9 +245,11 @@ public class CarPool {
             carRequest.put("EndTime", endTime.getTime());
             if(abortOrReady) {
                 carRequest.put("State", StatusTypes.READY.toString());
+                //add request to cache
                 this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.READY));
             } else {
                 carRequest.put("State", StatusTypes.ABORT.toString());
+                //add request to cache
                 this.requestList.add(new CarRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
             }
             carRequests.add(carRequest);
@@ -264,12 +269,14 @@ public class CarPool {
      * @param bookingId the id of the request which should be removed
      */
     public void removeRequestFromList(String bookingId) {
+        //remove request from cache
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId().equals( bookingId)) {
                 this.requestList.remove(i);
                 break;
             }
         }
+        //remove request from stable storage
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
         {
@@ -303,11 +310,13 @@ public class CarPool {
         Date startTime = null;
         Date endTime = null;
         if(request != null) {
+            //remove request and booking from cache
             this.rollbackRequestOfBookingID(bookingId);
         } else {
             JSONParser jParser = new JSONParser();
             try (FileReader reader = new FileReader(dataFilePath))
             {
+                //remove booking from stable storage if it exists
                 JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
                 JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
                 for(int i = 0; i < cars.size(); i++) {
@@ -334,6 +343,7 @@ public class CarPool {
                 e.printStackTrace();
             }
             if(carId != -1) {
+                //remove booking from cache if it exists
                 this.carList.get(carId).removeBooking(startTime, endTime);
             }
         }

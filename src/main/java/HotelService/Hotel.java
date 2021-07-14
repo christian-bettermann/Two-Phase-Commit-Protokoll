@@ -2,7 +2,6 @@ package HotelService;
 
 import JsonUtility.JsonHandler;
 import Message.StatusTypes;
-import Request.CarRequest;
 import Request.RoomRequest;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -45,10 +44,12 @@ public class Hotel {
         RoomRequest request = getRequest(bookingId);
         boolean result;
         if(request  == null) {
+            //if request does not exists add it to list and check the avalaibility
             result = this.roomList.get(roomId - 1).checkAndBookIfFree(startTime, endTime);
             this.addRequestToList(target, port, bookingId, roomId, startTime, endTime, result);
             return result;
         } else {
+            //if request does already exist check the result which was evaluated before
             StatusTypes state = request.getState();
             if(state.equals(StatusTypes.READY)) {
                 result = true;
@@ -156,6 +157,7 @@ public class Hotel {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(dataFilePath))
         {
+            //read room data
             JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
             for (int i = 0; i < rooms.size(); i++) {
@@ -166,6 +168,7 @@ public class Hotel {
                         Integer.parseInt(roomInfo.get("Bath").toString()),
                         RoomTypes.valueOf(roomInfo.get("Type").toString())
                 );
+                //read already booked reservations for the specific room
                 JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(roomInfo.get("Reservations"));
                 for(int j = 0; j < reservationJsonArray.size(); j++) {
                     JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
@@ -180,6 +183,7 @@ public class Hotel {
         }
         try (FileReader reader = new FileReader(requestsFilePath))
         {
+            //read all open request from the request file and at it to the requestlist
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
             for (int i = 0; i < requests.size(); i++) {
@@ -230,6 +234,7 @@ public class Hotel {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
         {
+            //add request to stable storage
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray roomRequests = jsonHandler.getAttributeAsJsonArray(requestsData.get("RoomRequests"));
             JSONObject roomRequest = new JSONObject();
@@ -241,9 +246,11 @@ public class Hotel {
             roomRequest.put("EndTime", endTime.getTime());
             if(abortOrReady) {
                 this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.READY));
+                //add request to cache
                 roomRequest.put("State", StatusTypes.READY.toString());
             } else {
                 this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
+                //add request to cache
                 roomRequest.put("State", StatusTypes.ABORT.toString());
             }
             roomRequests.add(roomRequest);
@@ -263,12 +270,14 @@ public class Hotel {
      * @param bookingId the id of the request which should be removed
      */
     public void removeRequestFromList(String bookingId) {
+        //remove request from cache
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId().equals(bookingId)) {
                 this.requestList.remove(i);
                 break;
             }
         }
+        //remove request from stable storage
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
         {
@@ -302,11 +311,13 @@ public class Hotel {
         Date startTime = null;
         Date endTime = null;
         if(request != null) {
+            //remove request and booking from cache
             this.rollbackRequestOfBookingID(bookingId);
         } else {
             JSONParser jParser = new JSONParser();
             try (FileReader reader = new FileReader(dataFilePath))
             {
+                //remove booking from stable storage if it exists
                 JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
                 JSONArray rooms= jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
                 for(int i = 0; i < rooms.size(); i++) {
@@ -333,6 +344,7 @@ public class Hotel {
                 e.printStackTrace();
             }
             if(roomId != -1) {
+                //remove booking from cache if it exists
                 this.roomList.get(roomId).removeBooking(startTime, endTime);
             }
         }
