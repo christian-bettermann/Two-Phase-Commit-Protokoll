@@ -43,9 +43,9 @@ public class DecisionHandler {
                 logger.info("### RESULT => ROLLBACK!");
                 relatedRequest.resetMessageCounter();
                 msgHandler.updateRequestAtList(bookingId, null, null, StatusTypes.ROLLBACK);
-                Message answerForHotelBroker = msgFactory.buildRollback(income.getBookingID(), "OkThenRollback", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+                Message answerForHotelBroker = msgFactory.buildRollback(bookingId, "OkThenRollback", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
                 msgHandler.answerParticipant(answerForHotelBroker, msgHandler.getServer().getHotelBroker().getAddress(), msgHandler.getServer().getHotelBroker().getPort());
-                answer = msgHandler.msgFactory.buildRollback(income.getBookingID(), "OkThenRollback", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
+                answer = msgFactory.buildRollback(bookingId, "OkThenRollback", msgHandler.getLocalAddress(), msgHandler.getLocalPort());
             }
         }
         if(messageFromHotelBroker(income.getSenderAddress(), income.getSenderPort())) {
