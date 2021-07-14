@@ -26,6 +26,7 @@ public class ServerMessageHandler implements Runnable{
 	//Attribute
 	private final int id;
 	protected MessageFactory msgFactory;
+	private DecisionHandler decisionHandler;
 	private final String requestFilePath;
 	private final JsonHandler jsonHandler;
 	private static final Logger logger = LogManager.getRootLogger();
@@ -41,6 +42,7 @@ public class ServerMessageHandler implements Runnable{
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
 		this.id = id;
 		this.msgFactory = new MessageFactory();
+		this.decisionHandler = new DecisionHandler(this);
 		this.jsonHandler = new JsonHandler();
 		this.requestFilePath = "src/main/resources/Server/requests_Server_" + id + ".json";
 		this.incomingMessages = incomingMessages;
