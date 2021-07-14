@@ -126,7 +126,12 @@ public class CarBroker implements Runnable {
 		return response;
 	}
 
+
+	/**
+	 * A method to initialize the broker and send old request back to the server
+	 */
 	private void initialize() {
+		//Config
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader("src/main/resources/CarService/config.json"))
 		{
@@ -144,6 +149,7 @@ public class CarBroker implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+		//Handle old request maybe from a crash
 		ArrayList<CarRequest> oldRequests = pool.getRequests();
 		DatagramPacket packet;
 		CarRequest singleOldRequest;

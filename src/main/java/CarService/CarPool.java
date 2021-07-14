@@ -30,6 +30,16 @@ public class CarPool {
         this.jsonHandler = new JsonHandler();
     }
 
+    /**
+     * A method to check an incomming request for an car if it is free or not at the specified timezone
+     * @param target the ip address of the sender
+     * @param port the port address of the sender
+     * @param bookingId the booking of the transaction
+     * @param carId the specific car id
+     * @param startTime specified startpoint
+     * @param endTime specified endpoint
+     * @return The method returns true if the car is bookable at the specified timezone and false if not
+     */
     public boolean checkCarOfId(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime) {
         CarRequest request = getRequest(bookingId);
         boolean result;
@@ -48,6 +58,11 @@ public class CarPool {
         }
     }
 
+    /**
+     * The method checks if an transaction was rollbacked or committed
+     * @param bookingId id of the transaction
+     * @return It returns true if it was committed and false if it was rollbacked
+     */
     public boolean inquireMessage(String bookingId) {
         boolean result = false;
         JSONParser jParser = new JSONParser();
@@ -72,6 +87,10 @@ public class CarPool {
         return result;
     }
 
+    /**
+     * The method saves an request for an car to the stable storage
+     * @param bookingID id of the request
+     */
     public void commitRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         if(request != null) {
@@ -99,6 +118,10 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to delete an request for an car
+     * @param bookingID id of the request
+     */
     public void rollbackRequestOfBookingID(String bookingID) {
         CarRequest request = getRequest(bookingID);
         if(request != null) {
@@ -109,6 +132,11 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to get an specified request from the requestlist
+     * @param bookingId id of the request
+     * @return The method returns the reference to the request
+     */
     private CarRequest getRequest(String bookingId) {
         CarRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
@@ -120,10 +148,14 @@ public class CarPool {
         return request;
     }
 
+    /**
+     * A method to initialize the carpool and read the information from teh data file
+     */
     public void initialize() {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(dataFilePath))
         {
+            //read car data
             JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("cars"));
             for (int i = 0; i < cars.size(); i++) {
@@ -133,6 +165,7 @@ public class CarPool {
                         Integer.parseInt(carInfo.get("HorsePower").toString()),
                         CarTypes.valueOf(carInfo.get("Type").toString())
                 );
+                //read already booked reservations for the specific car
                 JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(carInfo.get("Reservations"));
                 for(int j = 0; j < reservationJsonArray.size(); j++) {
                     JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
@@ -147,6 +180,7 @@ public class CarPool {
         }
         try (FileReader reader = new FileReader(requestsFilePath))
         {
+            //read all open request from the request file and at it to the requestlist
             JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
             JSONArray requests = jsonHandler.getAttributeAsJsonArray(requestsData.get("CarRequests"));
             for (int i = 0; i < requests.size(); i++) {
@@ -166,6 +200,10 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to build an string of all cars with their informations
+     * @return The method returns a string which contains all cars and their information
+     */
     public String getInfoOfCars() {
         String result = "";
         int lengthOfInfo = this.carList.size();
@@ -179,6 +217,16 @@ public class CarPool {
         return result;
     }
 
+    /**
+     * A method to add an request to the service it synchronize the request cache and stable storage
+     * @param target ip address of the sender
+     * @param port port of the sender
+     * @param bookingId booking of the transaction
+     * @param carId the specific car id
+     * @param startTime the startpoint of booking
+     * @param endTime the endpoint of booking
+     * @param abortOrReady the car is free or it is not represented by true or false
+     */
     public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
@@ -211,6 +259,10 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to remove an request from the service it snychronize the request cache and stable storage
+     * @param bookingId the id of the request which should be removed
+     */
     public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId().equals( bookingId)) {
@@ -241,6 +293,10 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to make every step of an handled request non existend
+     * @param bookingId the id of the request which should be destroyed
+     */
     public void undoEverything(String bookingId) {
         CarRequest request = getRequest(bookingId);
         int carId = -1;
@@ -283,6 +339,9 @@ public class CarPool {
         }
     }
 
+    /**
+     * A method to get all open request as an list
+     */
     public ArrayList<CarRequest> getRequests() {
         return this.requestList;
     }

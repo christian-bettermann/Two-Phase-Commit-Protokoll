@@ -27,6 +27,12 @@ public class Car {
         this.reservationList = new ArrayList<BlockedTimeZone>();
     }
 
+    /**
+     * A method to check a car is free and if it is free to book it for the specified time
+     * @param startTime Specified start
+     * @param endTime Specified end
+     * @return The method returns true if the car is free and was booked and it returns false if it was not free
+     */
     public boolean checkAndBookIfFree(Date startTime, Date endTime) {
         boolean free = checkCarIsFreeInTimeZone(startTime, endTime);
         if(free) {
@@ -35,6 +41,12 @@ public class Car {
         return free;
     }
 
+    /**
+     * A method to check a car is free in a specified time zone
+     * @param startTime specified startpoint
+     * @param endTime specified endpoint
+     * @return The method returns true if the car is free and false if it is not
+     */
     private boolean checkCarIsFreeInTimeZone(Date startTime, Date endTime) {
         boolean free;
         int actuallyReservationAmount = this.reservationList.size();
@@ -56,10 +68,20 @@ public class Car {
         return free;
     }
 
+    /**
+     * A method to book a car at an specified timezone
+     * @param startTime specified startpoint
+     * @param EndTime specified endpoint
+     */
     public void bookCar(Date startTime, Date EndTime) {
         this.reservationList.add(new BlockedTimeZone(startTime, EndTime));
     }
 
+    /**
+     * A method to remove an booking of the car for an specified timezone
+     * @param startTime specified startpoint
+     * @param EndTime specified endpoint
+     */
     public void removeBooking(Date startTime, Date EndTime) {
         for(int i = 0; i < this.reservationList.size(); i++) {
             if(this.reservationList.get(i).getStartTime().equals(startTime) && this.reservationList.get(i).getEndTime().equals(EndTime)) {

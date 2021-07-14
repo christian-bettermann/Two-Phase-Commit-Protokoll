@@ -39,8 +39,8 @@ public class HotelBroker implements Runnable {
 		this.hotel.initialize();
 		this.initialize();
     }
-    
-    public void run() {
+
+	public void run() {
         online = true;
         while (online) {
         	try {
