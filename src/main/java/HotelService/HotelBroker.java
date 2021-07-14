@@ -126,7 +126,11 @@ public class HotelBroker implements Runnable {
 		return response;
 	}
 
+	/**
+	 * A method to initialize the broker and send old request back to the server
+	 */
 	private void initialize() {
+		//Config
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader("src/main/resources/HotelService/config.json"))
 		{
@@ -144,6 +148,7 @@ public class HotelBroker implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
+		//Handle old requests maybe from a crash
 		ArrayList<RoomRequest> oldRequests = hotel.getRequests();
 		DatagramPacket packet;
 		RoomRequest singleOldRequest;

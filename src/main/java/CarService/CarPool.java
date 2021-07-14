@@ -260,7 +260,7 @@ public class CarPool {
     }
 
     /**
-     * A method to remove an request from the service it snychronize the request cache and stable storage
+     * A method to remove an request from the service it synchronize the request cache and stable storage
      * @param bookingId the id of the request which should be removed
      */
     public void removeRequestFromList(String bookingId) {

@@ -148,7 +148,7 @@ public class CarBroker implements Runnable {
 		} catch (SocketException e) {
 			e.printStackTrace();
 		}
-		//Handle old request maybe from a crash
+		//Handle old requests maybe from a crash
 		ArrayList<CarRequest> oldRequests = pool.getRequests();
 		DatagramPacket packet;
 		CarRequest singleOldRequest;

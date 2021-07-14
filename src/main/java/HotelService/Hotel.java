@@ -31,6 +31,16 @@ public class Hotel {
         this.jsonHandler = new JsonHandler();
     }
 
+    /**
+     * A method to check an incomming request for an car if it is free or not at the specified timezone
+     * @param target the ip address of the sender
+     * @param port the port address of the sender
+     * @param bookingId the booking of the transaction
+     * @param roomId the specific room id
+     * @param startTime specified startpoint
+     * @param endTime specified endpoint
+     * @return The method returns true if the room is bookable at the specified timezone and false if not
+     */
     public boolean checkRoomOfId(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime) {
         RoomRequest request = getRequest(bookingId);
         boolean result;
@@ -49,6 +59,11 @@ public class Hotel {
         }
     }
 
+    /**
+     * The method checks if an transaction was rollbacked or committed
+     * @param bookingId id of the transaction
+     * @return It returns true if it was committed and false if it was rollbacked
+     */
     public boolean inquireMessage(String bookingId) {
         boolean result = false;
         JSONParser jParser = new JSONParser();
@@ -73,6 +88,10 @@ public class Hotel {
         return result;
     }
 
+    /**
+     * The method saves an request for an room to the stable storage
+     * @param bookingId id of the request
+     */
     public void commitRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
         if(request != null) {
@@ -100,6 +119,10 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to delete an request for an room
+     * @param bookingId id of the request
+     */
     public void rollbackRequestOfBookingID(String bookingId) {
         RoomRequest request = getRequest(bookingId);
         if(request != null) {
@@ -110,6 +133,11 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to get an specified request from the requestlist
+     * @param bookingId id of the request
+     * @return The method returns the reference to the request
+     */
     private RoomRequest getRequest(String bookingId) {
         RoomRequest request = null;
         for(int i = 0; i < requestList.size(); i++) {
@@ -121,6 +149,9 @@ public class Hotel {
         return request;
     }
 
+    /**
+     * A method to initialize the carpool and read the information from teh data file
+     */
     public void initialize() {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(dataFilePath))
@@ -168,6 +199,10 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to build an string of all rooms with their informations
+     * @return The method returns a string which contains all rooms and their information
+     */
     public String getInfoOfRooms() {
         String result = "";
         int lengthOfInfo = this.roomList.size();
@@ -181,6 +216,16 @@ public class Hotel {
         return result;
     }
 
+    /**
+     * A method to add an request to the service it synchronize the request cache and stable storage
+     * @param target ip address of the sender
+     * @param port port of the sender
+     * @param bookingId booking of the transaction
+     * @param carId the specific room id
+     * @param startTime the startpoint of booking
+     * @param endTime the endpoint of booking
+     * @param abortOrReady the car is free or it is not represented by true or false
+     */
     public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
@@ -213,6 +258,10 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to remove an request from the service it synchronize the request cache and stable storage
+     * @param bookingId the id of the request which should be removed
+     */
     public void removeRequestFromList(String bookingId) {
         for(int i = 0; i < requestList.size(); i++) {
             if(this.requestList.get(i).getId().equals(bookingId)) {
@@ -243,6 +292,10 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to make every step of an handled request non existend
+     * @param bookingId the id of the request which should be destroyed
+     */
     public void undoEverything(String bookingId) {
        RoomRequest request = getRequest(bookingId);
         int roomId = -1;
@@ -285,6 +338,9 @@ public class Hotel {
         }
     }
 
+    /**
+     * A method to get all open request as an list
+     */
     public ArrayList<RoomRequest> getRequests() {
         return this.requestList;
     }
