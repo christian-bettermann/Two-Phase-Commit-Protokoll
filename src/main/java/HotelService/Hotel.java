@@ -31,7 +31,7 @@ public class Hotel {
     }
 
     /**
-     * A method to check an incomming request for an car if it is free or not at the specified timezone
+     * A method to check an incomming request for an room if it is free or not at the specified timezone
      * @param target the ip address of the sender
      * @param port the port address of the sender
      * @param bookingId the booking of the transaction
@@ -70,11 +70,11 @@ public class Hotel {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(dataFilePath))
         {
-            JSONObject carsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
-            JSONArray cars= jsonHandler.getAttributeAsJsonArray(carsData.get("rooms"));
-            for(int i = 0; i < cars.size(); i++) {
-                JSONObject singleCar = jsonHandler.getAttributeAsJsonObject(cars.get(i));
-                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleCar.get("Reservations"));
+            JSONObject roomsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
+            JSONArray rooms = jsonHandler.getAttributeAsJsonArray(roomsData.get("rooms"));
+            for(int i = 0; i < rooms.size(); i++) {
+                JSONObject singleRoom = jsonHandler.getAttributeAsJsonObject(rooms.get(i));
+                JSONArray reservationJsonArray = jsonHandler.getAttributeAsJsonArray(singleRoom.get("Reservations"));
                 for(int j = 0; j < reservationJsonArray.size(); j++) {
                     JSONObject singleBookingData = jsonHandler.getAttributeAsJsonObject(reservationJsonArray.get(j));
                     if (singleBookingData.get("Id").toString().equals(bookingId)) {
@@ -151,7 +151,7 @@ public class Hotel {
     }
 
     /**
-     * A method to initialize the carpool and read the information from teh data file
+     * A method to initialize the Hotel and read the information from the data file
      */
     public void initialize() {
         JSONParser jParser = new JSONParser();
@@ -225,12 +225,12 @@ public class Hotel {
      * @param target ip address of the sender
      * @param port port of the sender
      * @param bookingId booking of the transaction
-     * @param carId the specific room id
+     * @param roomId the specific room id
      * @param startTime the startpoint of booking
      * @param endTime the endpoint of booking
-     * @param abortOrReady the car is free or it is not represented by true or false
+     * @param abortOrReady the room is free or it is not represented by true or false
      */
-    public void addRequestToList(InetAddress target, int port, String bookingId, int carId, Date startTime, Date endTime, boolean abortOrReady) {
+    public void addRequestToList(InetAddress target, int port, String bookingId, int roomId, Date startTime, Date endTime, boolean abortOrReady) {
         JSONParser jParser = new JSONParser();
         try (FileReader reader = new FileReader(requestsFilePath))
         {
@@ -241,15 +241,15 @@ public class Hotel {
             roomRequest.put("Target_IP", target.toString().replace("/", ""));
             roomRequest.put("Target_Port", port);
             roomRequest.put("BookingId", bookingId);
-            roomRequest.put("RoomId", carId);
+            roomRequest.put("RoomId", roomId);
             roomRequest.put("StartTime", startTime.getTime());
             roomRequest.put("EndTime", endTime.getTime());
             if(abortOrReady) {
-                this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.READY));
+                this.requestList.add(new RoomRequest(target, port, bookingId, roomId, startTime, endTime, StatusTypes.READY));
                 //add request to cache
                 roomRequest.put("State", StatusTypes.READY.toString());
             } else {
-                this.requestList.add(new RoomRequest(target, port, bookingId, carId, startTime, endTime, StatusTypes.ABORT));
+                this.requestList.add(new RoomRequest(target, port, bookingId, roomId, startTime, endTime, StatusTypes.ABORT));
                 //add request to cache
                 roomRequest.put("State", StatusTypes.ABORT.toString());
             }

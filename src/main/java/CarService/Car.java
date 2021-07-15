@@ -28,7 +28,7 @@ public class Car {
     }
 
     /**
-     * A method to check a car is free and if it is free to book it for the specified time
+     * A method to check a if car is free and if it is free to book it for the specified time
      * @param startTime Specified start
      * @param endTime Specified end
      * @return The method returns true if the car is free and was booked and it returns false if it was not free
@@ -42,7 +42,7 @@ public class Car {
     }
 
     /**
-     * A method to check a car is free in a specified time zone
+     * A method to check if a car is free in a specified time zone
      * @param startTime specified startpoint
      * @param endTime specified endpoint
      * @return The method returns true if the car is free and false if it is not

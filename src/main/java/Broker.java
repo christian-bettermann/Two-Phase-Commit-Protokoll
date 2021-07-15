@@ -1,5 +1,6 @@
 import java.net.InetAddress;
 
+//this class is used to store information about the brokers for the servers
 public class Broker {
 	private InetAddress address;
 	private int port;

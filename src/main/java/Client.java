@@ -24,7 +24,7 @@ import com.toedter.calendar.JDateChooser;
 
 import Message.*;
 
-
+//this class generates a UI to start a booking request
 public class Client implements Runnable {
 	private static final Logger logger = LogManager.getRootLogger();	//shared logger
 	private InetAddress localAddress;									//own address

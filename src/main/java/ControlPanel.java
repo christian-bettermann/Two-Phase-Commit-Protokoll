@@ -12,6 +12,7 @@ import org.apache.logging.log4j.Logger;
 import HotelService.HotelBroker;
 import CarService.CarBroker;
 
+//this class generates a control panel with which you can shutdown and start the brokers and servers
 public class ControlPanel implements Runnable {
 	private static final Logger logger = LogManager.getRootLogger();
 	private Thread serverOneThread, serverTwoThread, carBrokerThread, hotelBrokerThread;
@@ -151,6 +152,7 @@ public class ControlPanel implements Runnable {
 		    	if(sone.getText().equals("Shutdown")) {
 		    		sone.setText("Start");
 		    		
+		    		//close all Threads used for the server and message handling
 		    		serverOne.shutdownHandler();
 		    		serverOneThread.stop();
 		    		serverOneThread = null;
@@ -190,6 +192,7 @@ public class ControlPanel implements Runnable {
 		    	if(stwo.getText().equals("Shutdown")) {
 		    		stwo.setText("Start");
 		    		
+		    		//close all Threads used for the server and message handling
 		    		serverTwo.shutdownHandler();
 		    		serverTwoThread.stop();
 		    		serverTwoThread = null;

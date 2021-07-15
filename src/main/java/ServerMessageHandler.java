@@ -24,25 +24,31 @@ import org.json.simple.parser.ParseException;
 
 public class ServerMessageHandler implements Runnable{
 	//Attribute
-	private final int id;
-	protected MessageFactory msgFactory;
-	private DecisionHandler decisionHandler;
-	private final String requestFilePath;
-	private final JsonHandler jsonHandler;
-	private static final Logger logger = LogManager.getRootLogger();
-	protected final DatagramSocket socket;
-	private final BlockingQueue<Message> incomingMessages;
-	protected final String name;
-	private Boolean online;
-	protected final Server server;
-	private final ArrayList<ServerRequest> requestList;
-	private Semaphore sem;
-	Thread smhtcThread;
+	protected MessageFactory msgFactory;										//message builder
+	private DecisionHandler decisionHandler;									//handles response for messages
+	private final String requestFilePath;										//json file path to store open requests 
+	private final JsonHandler jsonHandler;										//works on json files (stable store)
+	private static final Logger logger = LogManager.getRootLogger();			//shared logger
+	protected final DatagramSocket socket;										//UDP socket
+	private final BlockingQueue<Message> incomingMessages;						//shared queue with messages that the server received
+	protected final String name;												//ServerMessageHandler name
+	private Boolean online;														//keeps the while loop alive
+	protected final Server server;												//server, that started this ServerMessageHandler
+	private final ArrayList<ServerRequest> requestList;							//local object of open requests
+	private Semaphore sem;														//Semaphore to sync file access
+	Thread smhtcThread;															//ServerMessageHandlerTimeChecker Thread
 	
+	/**
+	 * A constructor to create a new ServerMessageHandler
+	 * @param	id: 	the id of the server, so it knows which request file to use
+	 * 			name:	the name of the server, so it writes correct logs
+	 * 			incomingMessages:	the shared queue for the messages received by the server
+	 * 			socket:	the shared UDP socket of the server
+	 * 			server:	the server, that started this ServerMessageHandler
+	 */
 	public ServerMessageHandler(int id, String name, BlockingQueue<Message> incomingMessages, DatagramSocket socket, Server server) {
-		this.id = id;
 		this.msgFactory = new MessageFactory();
-		this.decisionHandler = new DecisionHandler(this, logger, this.msgFactory);
+		this.decisionHandler = new DecisionHandler(this, this.msgFactory);
 		this.jsonHandler = new JsonHandler();
 		this.requestFilePath = "src/main/resources/Server/requests_Server_" + id + ".json";
 		this.incomingMessages = incomingMessages;
@@ -54,6 +60,9 @@ public class ServerMessageHandler implements Runnable{
 		this.initialize();
 	}
 	
+	/**
+	 * A function to start the ServerMessageHandler
+	 */
 	public void run() {
 		logger.info("Starting <" + name + "> for port <" + socket.getLocalPort() + ">...");
 		online = true;
@@ -79,6 +88,11 @@ public class ServerMessageHandler implements Runnable{
         socket.close();
 	}
 	
+	/**
+	 * A method to handle the different message types
+	 * @param	msg: the message that should be handled
+	 * @return 	response:	the response for the handled message
+	 */
 	private Message analyzeAndGetResponse(Message msg) {
 		String statusMessage = msg.getStatusMessage();
 		Message response = null;
@@ -86,6 +100,7 @@ public class ServerMessageHandler implements Runnable{
 		try {
 			switch(msg.getStatus()) {
 				case INFO:
+					//pass the message for the dynamic load of the car and room data to the brokers
 					logger.trace("Handling Info message");
 					Message infoMsgCar = msgFactory.buildInfo("0", "GetInitialInfo", msg.getSenderAddress(), msg.getSenderPort());
 					answerParticipant(infoMsgCar, server.getCarBroker().getAddress(), server.getCarBroker().getPort());
@@ -97,18 +112,19 @@ public class ServerMessageHandler implements Runnable{
 						String uniqueID = UUID.randomUUID().toString();
 						String timestamp = String.valueOf(new Date().getTime());
 						String newBookingID = server.getName()+ "_" + timestamp + "_" + uniqueID;
+						//send the assigned bookingId for the request to the client
 						response = msgFactory.buildBooking(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						
+						//send the PREPAREs to the brokers
 						Message prepareMsgCar = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						answerParticipant(prepareMsgCar, server.getCarBroker().getAddress(),server.getCarBroker().getPort());
 						Message prepareMsgHotel = msgFactory.buildPrepare(newBookingID, msg.getStatusMessage(), InetAddress.getLocalHost(), socket.getLocalPort());
 						answerParticipant(prepareMsgHotel, server.getHotelBroker().getAddress(), server.getHotelBroker().getPort());
+						//add request to local object and stable store
 						this.addRequestToList(newBookingID, Integer.parseInt(msg.getStatusMessageCarId()), Integer.parseInt(msg.getStatusMessageRoomId()), new Date(msg.getStatusMessageStartTime()), new Date(msg.getStatusMessageEndTime()), msg.getSenderAddress(), msg.getSenderPort(), new Date());
 					} else {
 						response = msgFactory.buildError(null, "ERROR_Invalid_Booking", InetAddress.getLocalHost(), socket.getLocalPort());
 					}
-					logger.error("################################# Press Shutdown quickly BOOKING #################################");
-					TimeUnit.SECONDS.sleep(5);
 					break;
 				case READY:
 					response = decisionHandler.handleReady(msg, request);
@@ -140,6 +156,17 @@ public class ServerMessageHandler implements Runnable{
 		return response;
 	}
 
+	/**
+	 * A method to add a new request to the local object and the request file
+	 * @param	bookingId: 	the bookingId of the request
+	 * 			carId:		the id of the requested car
+	 * 			roomId:		the id of the requested room
+	 * 			startTime:	the startTime of the request
+	 * 			endTime:	the endTime of the request
+	 * 			clientAddress:	the ip of the client that send the request
+	 * 			clientPort:	the port of the client that send the request
+	 * 			timestamp:	the time the request was received by the server
+	 */
 	private void addRequestToList(String bookingId, int carId, int roomId, Date startTime, Date endTime, InetAddress clientAddress, int clientPort, Date timestamp) {
 		try {
 			sem.acquire();
@@ -147,6 +174,7 @@ public class ServerMessageHandler implements Runnable{
 			e1.printStackTrace();
 		}
 		this.requestList.add(new ServerRequest(bookingId, carId, roomId, startTime, endTime, clientAddress, clientPort, StatusTypes.INITIALIZED, StatusTypes.INITIALIZED, timestamp, StatusTypes.INITIALIZED));
+		//add to stable store
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath))
 		{
@@ -180,6 +208,11 @@ public class ServerMessageHandler implements Runnable{
 		sem.release();
 	}
 
+	/**
+	 * A method to add a new request to the local object and the request file
+	 * @param	bookingId: 	the bookingId of the request that should be updated
+	 * 			newTimestamp:	the new timestamp for the request
+	 */
 	protected void updateRequestTimestamp(String bookingId, Date newTimestamp) {
 		if(this.getRequest(bookingId) == null) {
 			return;
@@ -194,6 +227,7 @@ public class ServerMessageHandler implements Runnable{
 		if(request.getTimestamp().before(newTimestamp)) {
 			request.setTimestamp(newTimestamp);
 		}
+		//update timestamp in stable store
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath)) {
 			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
@@ -223,6 +257,13 @@ public class ServerMessageHandler implements Runnable{
 		sem.release();
 	}
 	
+	/**
+	 * A method to update information about a booking request in the local object and the request file
+	 * @param	bookingId: 	the bookingId of the request
+	 * 			carState:	the new state, that the carBroker sent
+	 * 			hotelId:	the new state, that the hotelBroker sent
+	 * 			globalState:	the new state, that the server calculated
+	 */
 	protected void updateRequestAtList(String bookingId, StatusTypes carState, StatusTypes hotelState, StatusTypes globalState) {
 		if(getRequest(bookingId) == null) {
 			return;
@@ -240,6 +281,7 @@ public class ServerMessageHandler implements Runnable{
 		if(!(request.getHotelBrokerState().equals(hotelState)) && hotelState != null) {
 			request.setHotelBrokerState(hotelState);
 		}
+		//pass the decision to the client if the globalState (server decision) changes
 		if(!(request.getGlobalState().equals(globalState)) && globalState != null) {
 			request.setGlobalState(globalState);
 			try {
@@ -255,6 +297,7 @@ public class ServerMessageHandler implements Runnable{
 				e.printStackTrace();
 			}
 		}
+		//update stable store
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath)) {
 			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
@@ -293,8 +336,13 @@ public class ServerMessageHandler implements Runnable{
 		sem.release();
 	}
 
-	
-	
+	/**
+	 * A method to remove a booking request from the local object and the request file
+	 * @param	bookingId: 	the bookingId of the request
+	 * 			carState:	the new state, that the carBroker sent
+	 * 			hotelId:	the new state, that the hotelBroker sent
+	 * 			globalState:	the new state, that the server calculated
+	 */
 	protected void removeRequestFromList(String bookingId) {
 		for(int i = 0; i < requestList.size(); i++) {
 			if(this.requestList.get(i).getId().equals(bookingId)) {
@@ -307,6 +355,7 @@ public class ServerMessageHandler implements Runnable{
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
+		//remove from stable store
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(this.requestFilePath)) {
 			JSONObject requestsData = jsonHandler.getAttributeAsJsonObject(jParser.parse(reader));
@@ -331,12 +380,14 @@ public class ServerMessageHandler implements Runnable{
 		sem.release();
 	}
 
+	//A function to read data from the stable store and build local objects from the data
 	private void initialize() {
 		try {
 			sem.acquire();
 		} catch (InterruptedException e1) {
 			e1.printStackTrace();
 		}
+		//read open request from stable store
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader(requestFilePath))
 		{
@@ -356,16 +407,19 @@ public class ServerMessageHandler implements Runnable{
 					new Date(Long.parseLong(requestInfo.get("Timestamp").toString())),
 					StatusTypes.valueOf(requestInfo.get("GlobalState").toString())
 				);
+				//add the open request to the local object
 				this.requestList.add(singleServerRequest);
 			}
 		} catch (IOException | ParseException e) {
 			e.printStackTrace();
 		}
 		ServerRequest singleOldRequest;
+		//resent messages to proceed with the requests
 		if(requestList.size() > 0) {
 			for(int i = 0; i < requestList.size(); i++) {
 				singleOldRequest = requestList.get(i);
 				singleOldRequest.setTimestamp(new Date());
+				//resent server decisions if an ACKNOWLEDGEMENT is missing
 				if(singleOldRequest.getGlobalState() == StatusTypes.COMMIT) {
 					if(!singleOldRequest.getCarBrokerState().equals(StatusTypes.ACKNOWLEDGMENT)) {
 						Message msgForCarBroker = msgFactory.buildCommit(singleOldRequest.getId(), "OkThenCommit", this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -387,6 +441,7 @@ public class ServerMessageHandler implements Runnable{
 				} else {
 					Message msgForCarBroker;
 					Message msgForHotelBroker;
+					//resent PREPAREs if a broker decision is missing
 					switch(singleOldRequest.getCarBrokerState()) {
 						case INITIALIZED:
 							msgForCarBroker = msgFactory.buildPrepare(singleOldRequest.getId(), singleOldRequest.contentToString(), this.socket.getLocalAddress(), this.socket.getLocalPort());
@@ -409,8 +464,14 @@ public class ServerMessageHandler implements Runnable{
 		sem.release();
 	}
 
+	/**
+	 * A method to get a request from the local object
+	 * @param	bookingId: 	the bookingId of the request
+	 * @return	request:	the wanted request
+	 */
 	protected ServerRequest getRequest(String bookingId) {
 		ServerRequest request = null;
+		//go through the local object and check if the bookingIds match
 		for(int i = 0; i < requestList.size(); i++) {
 			if(this.requestList.get(i).getId().equals(bookingId)) {
 				request = this.requestList.get(i);
@@ -424,8 +485,14 @@ public class ServerMessageHandler implements Runnable{
 		return requestList;
 	}
 
-	protected void answerParticipant(Message msg, InetAddress clientAddress, int clientPort) {
-		DatagramPacket dp = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, clientAddress, clientPort);
+	/**
+	 * A method to send a message to a participant
+	 * @param	msg: 	the message you want to send
+	 * 			participantAddress:		address of the participant you want to send the message to
+	 * 			participantPort:		port of the participant you want to send the message to
+	 */
+	protected void answerParticipant(Message msg, InetAddress participantAddress, int participantPort) {
+		DatagramPacket dp = new DatagramPacket(msg.toString().getBytes(), msg.toString().getBytes().length, participantAddress, participantPort);
 		logger.trace("<" + name + "> sent: <"+ new String(dp.getData(), 0, dp.getLength()) +">");
 		try {
 			socket.send(dp);
@@ -433,7 +500,13 @@ public class ServerMessageHandler implements Runnable{
 			e.printStackTrace();
 		}
 	}
-
+	
+	/**
+	 * A method to check if an address and port matches with the data of the carBroker
+	 * @param	pAddress: 	the address you want to check
+	 * 			pPort:		the port you want to check
+	 * @return	result:		true if it matches with the carBroker data, otherwise false
+	 */
 	private boolean messageFromCarBroker(InetAddress pAddress, int pPort) {
 		boolean result = false;
 		if(pAddress.equals(server.getCarBroker().getAddress()) && pPort == server.getCarBroker().getPort()) {
@@ -442,6 +515,12 @@ public class ServerMessageHandler implements Runnable{
 		return result;
 	}
 
+	/**
+	 * A method to check if an address and port matches with the data of the hotelBroker
+	 * @param	pAddress: 	the address you want to check
+	 * 			pPort:		the port you want to check
+	 * @return	result:		true if it matches with the hotelBroker data, otherwise false
+	 */
 	private boolean messageFromHotelBroker(InetAddress pAddress, int pPort) {
 		boolean result = false;
 		if(pAddress.equals(server.getHotelBroker().getAddress()) && pPort == server.getHotelBroker().getPort()) {

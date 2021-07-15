@@ -1,4 +1,3 @@
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.net.DatagramPacket;
@@ -19,21 +18,25 @@ import org.json.simple.parser.ParseException;
 
 public class Server implements Runnable {
 	//Attribute
-	private int id;
-	private static final Logger logger = LogManager.getRootLogger();
-	private DatagramSocket socket;
-	private byte[] buffer = new byte[1024];
-	private String serverName;
-	private boolean online = true;
-	private BlockingQueue<Message> incomingMessages;
-    private InetAddress localAddress;
-    int serverPort;
-    boolean brokerToCheckOnline;
-    Broker carBroker;
-    Broker hotelBroker;
-    Thread incomingMessagesListHandler;
-    ServerMessageHandler serverMessageHandler;
+	private int id;															//id can be 1 or 2; indicates which config file is used for the server setup
+	private static final Logger logger = LogManager.getRootLogger();		//shared logger
+	private DatagramSocket socket;											//UPD socket
+	private byte[] buffer = new byte[1024];									//message buffer
+	private String serverName;												//loaded from config files stored globally
+	private boolean online = true;											//keeps the while loop for receiving messages alive
+	private BlockingQueue<Message> incomingMessages;						//shared Queue for messages (every received message is passed to the ServerMessageHandler through this queue)
+    private InetAddress localAddress;										//own ip
+    int serverPort;															//own port
+    boolean brokerToCheckOnline;											//used by the broker connection test on every server setup
+    Broker carBroker;														//only stores information (like address & port) about the broker (this is not the actual broker)
+    Broker hotelBroker;														//only stores information (like address & port) about the broker (this is not the actual broker)
+    Thread incomingMessagesListHandler;										//Thread of the ServerMessageHandler
+    ServerMessageHandler serverMessageHandler;								//the ServerMessageHandler receives the messages from the server an handles the response
     
+    /**
+	 * A constructor to create a new Server
+	 * @param	id: the id of the server, so it knows which config file to use
+	 */
 	public Server (int id) {
 		this.id = id;
 		try {
@@ -45,6 +48,7 @@ public class Server implements Runnable {
 		InetAddress hotelBrokerAddress;
 		int carBrokerPort;
 		int hotelBrokerPort;
+		//load server configuration from the config file
 		JSONParser jParser = new JSONParser();
 		try (FileReader reader = new FileReader("src/main/resources/Server/config_Server_" + id + ".json"))
 		{
@@ -63,10 +67,12 @@ public class Server implements Runnable {
 		} catch (ParseException | IOException e) {
 			e.printStackTrace();
 		}
+		//create shared queue for the incomming messages
 		incomingMessages = new ArrayBlockingQueue<Message>(1024);
 		brokerToCheckOnline = false;
 	}
 	
+	//A function to start the server
 	public void run() {
 		logger.info("Starting Server <" + serverName + "> on port <" + serverPort + "> ...");
 		try {
@@ -75,7 +81,7 @@ public class Server implements Runnable {
 			e.printStackTrace();
 		}
 		Broker[] broker = {carBroker, hotelBroker};
-		//Sending initial Messages to Brokers
+		//sending initial messages to brokers to proof, that they are online
 		for(Broker b : broker) {
 			do {
 				checkBrokerAvailability(b);
@@ -92,6 +98,10 @@ public class Server implements Runnable {
 		startMessageHandling();
 	}
 	
+	/**
+	 * A method to check if a broker is online or shutdown
+	 * @param broker:	Broker to check the connection to
+	 */
 	public void checkBrokerAvailability(Broker brokerToCheck) {
 		try {
 			brokerToCheckOnline = false;
@@ -118,11 +128,14 @@ public class Server implements Runnable {
 		}
 	}
 	
+	//A method to start receiving messages
 	public void startMessageHandling() {
+		//starting the ServerMessageHandler
 		serverMessageHandler = new ServerMessageHandler(this.id,serverName+"MessageHandler", incomingMessages, socket, this);
 		incomingMessagesListHandler = new Thread(serverMessageHandler);
 		incomingMessagesListHandler.start();
 		
+		//start receiving
 		while(online) {
 			try {
 				socket.setSoTimeout(120000);
@@ -131,9 +144,11 @@ public class Server implements Runnable {
 			    String received = new String(packet.getData(), 0, packet.getLength());
 			    logger.trace("Server received: "+ received);
 			    Message msgIn = new Message(received);
+			    //validate the received message (correct format?)
 			    if(msgIn.validate()) {
 			    	logger.trace("Received Message has a valid form: <" + msgIn.toString() +">");
 			    	try {
+			    		//pass message to ServerMessageHandler via shared queue
 						incomingMessages.put(msgIn);
 						logger.trace("Added Message to "+ serverName +"Queue: <" + msgIn.toString() +">");
 					} catch (InterruptedException e) {
@@ -171,6 +186,7 @@ public class Server implements Runnable {
 		socket.close();
 	}
 	
+	//This function is used to shutdown the ServerMessageHandler of a server
 	public void shutdownHandler() {
 		serverMessageHandler.shutdownServerMessageTimeHandler();
 		incomingMessagesListHandler.stop();
